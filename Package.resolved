@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "CommonMark",
+        "repositoryURL": "https://github.com/objcio/commonmark-swift",
+        "state": {
+          "branch": "swift-5",
+          "revision": "229414cdf572555932834eddd63755e3a11cf521",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
