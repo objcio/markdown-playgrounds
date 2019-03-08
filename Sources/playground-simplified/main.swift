@@ -31,13 +31,12 @@ class Highlighter {
     init(textView: NSTextView) {
         self.textView = textView
         observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: textView, queue: nil) { [unowned self] note in
-            self.highlight(note: note)
+            self.highlight()
         }
     }
     
-    func highlight(note: Notification) {
-        guard let s = textView.textStorage else { return }
-        s.highlight()
+    func highlight() {
+        textView.textStorage?.highlight()
     }
 }
 
@@ -70,8 +69,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         field.backgroundColor = .textBackgroundColor
         field.textColor = .textColor
         field.insertionPointColor = .textColor
+        
+        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
+        field.textStorage?.setAttributedString(NSAttributedString(string: defaultText))
 
         highlighter = Highlighter(textView: field)
+        highlighter?.highlight()
         
         scrollView.documentView = field
         window.contentView = scrollView

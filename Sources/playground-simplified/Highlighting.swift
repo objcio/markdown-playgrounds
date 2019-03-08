@@ -50,23 +50,35 @@ extension String.UnicodeScalarView {
 
 import Cocoa
 
+let fontSize: CGFloat = 14
+let defaults: [NSAttributedString.Key: Any] = [
+    .foregroundColor: NSColor.textColor,
+    .font: NSFont.systemFont(ofSize: fontSize)
+]
+
+
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
     func highlight() {
         beginEditing()
-        setAttributes([.foregroundColor: NSColor.textColor], range: range)
+        setAttributes(defaults, range: range)
         let parsed = Node(markdown: string)
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
+        
         for el in parsed?.children ?? [] {
             guard let t = NodeType(rawValue: el.type.rawValue) else { continue }
+            
+            let start = scalars.index(lineNumbers[Int(el.start.line-1)], offsetBy: Int(el.start.column-1))
+            let end = scalars.index(lineNumbers[Int(el.end.line-1)], offsetBy: Int(el.end.column-1))
+            let range = start...end
+            
             switch t {
             case .heading:
-                let start = scalars.index(lineNumbers[Int(el.start.line-1)], offsetBy: Int(el.start.column-1))
-                let end = scalars.index(lineNumbers[Int(el.end.line-1)], offsetBy: Int(el.end.column-1))
-                let range = start...end                
-                addAttribute(.foregroundColor, value: NSColor.highlightColor, range: NSRange(range, in: string))
+                addAttribute(.foregroundColor, value: NSColor.systemPink, range: NSRange(range, in: string))
+            case .code_block:
+                addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize), range: NSRange(range, in: string))
             default:
                 ()
             }
