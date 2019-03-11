@@ -9,11 +9,33 @@ let appItem = NSMenuItem()
 let edit = NSMenuItem()
 edit.title = "Edit"
 
+// for stdout reading, see https://stackoverflow.com/questions/29548811/real-time-nstask-output-to-nstextview-with-swift
+class REPL {
+    var process: Process!
+    let stdIn = Pipe()
+    init() {
+        self.process = Process()
+        self.process.launchPath = "/usr/bin/swift"
+        self.process.standardInput = self.stdIn
+        self.process.launch()
+    }
+    
+    var stdOut: FileHandle {
+        return process.standardOutput as! FileHandle
+    }
+    
+    func write(_ s: String) {
+        self.stdIn.fileHandleForWriting.write(s.data(using: .utf8)!)
+    }
+}
+
 // From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
 class Highlighter {
     let textView: NSTextView
     var observationToken: Any?
     var codeBlocks: [CodeBlock] = []
+    
+    let repl = REPL()
     
     init(textView: NSTextView) {
         self.textView = textView
@@ -30,7 +52,7 @@ class Highlighter {
         guard let r = textView.selectedRanges.first?.rangeValue else { return }
         guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return } // todo
         
-        print(found.text)
+        repl.write(found.text)
     }
 }
 
