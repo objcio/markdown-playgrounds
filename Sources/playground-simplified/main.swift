@@ -9,25 +9,12 @@ let appItem = NSMenuItem()
 let edit = NSMenuItem()
 edit.title = "Edit"
 
-
-
-let appMenu = NSMenu()
-let appName = ProcessInfo.processInfo.processName
-let quitTitle = "Quit \(appName)"
-let quitItem = NSMenuItem(title: quitTitle, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-appMenu.addItem(quitItem)
-appItem.submenu = appMenu
-edit.submenu = NSTextView.defaultMenu
-mainMenu.setSubmenu(NSTextView.defaultMenu, for: edit) // todo not entirely correct, should probably make the Edit menu ourselves.
-
-mainMenu.addItem(appItem)
-mainMenu.addItem(edit)
-app.mainMenu = mainMenu
-
 // From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
 class Highlighter {
     let textView: NSTextView
     var observationToken: Any?
+    var codeBlocks: [CodeBlock] = []
+    
     init(textView: NSTextView) {
         self.textView = textView
         observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: textView, queue: nil) { [unowned self] note in
@@ -36,7 +23,14 @@ class Highlighter {
     }
     
     func highlight() {
-        textView.textStorage?.highlight()
+        codeBlocks = textView.textStorage?.highlight() ?? []
+    }
+    
+    func execute() {
+        guard let r = textView.selectedRanges.first?.rangeValue else { return }
+        guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return } // todo
+        
+        print(found.text)
     }
 }
 
@@ -47,6 +41,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                           defer: false,
                           screen: nil)
     var highlighter: Highlighter?
+    
+    @objc func execute() {
+        highlighter?.execute()
+    }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         window.makeKeyAndOrderFront(nil)
@@ -70,9 +68,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         field.textColor = .textColor
         field.insertionPointColor = .textColor
         
-        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
-        field.textStorage?.setAttributedString(NSAttributedString(string: defaultText))
-
+        //        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
+        //        field.textStorage?.setAttributedString(NSAttributedString(string: defaultText))
+        
         highlighter = Highlighter(textView: field)
         highlighter?.highlight()
         
@@ -82,6 +80,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeFirstResponder(field)
     }
 }
+
+
+
+let appMenu = NSMenu()
+let appName = ProcessInfo.processInfo.processName
+let quitTitle = "Quit \(appName)"
+let quitItem = NSMenuItem(title: quitTitle, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+appMenu.addItem(quitItem)
+appItem.submenu = appMenu
+edit.submenu = NSTextView.defaultMenu
+mainMenu.setSubmenu(NSTextView.defaultMenu, for: edit) // todo not entirely correct, should probably make the Edit menu ourselves.
+
+
+let execute = NSMenuItem(title: "Execute", action: #selector(AppDelegate.execute), keyEquivalent: "e")
+edit.submenu?.addItem(execute)
+mainMenu.addItem(appItem)
+mainMenu.addItem(edit)
+app.mainMenu = mainMenu
+
 
 let delegate = AppDelegate()
 app.delegate = delegate

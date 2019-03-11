@@ -56,33 +56,42 @@ let defaults: [NSAttributedString.Key: Any] = [
     .font: NSFont.systemFont(ofSize: fontSize)
 ]
 
+struct CodeBlock {
+    let range: NSRange
+    let fenceInfo: String?
+    let text: String
+}
 
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
-    func highlight() {
+    func highlight() -> [CodeBlock] {
         beginEditing()
         setAttributes(defaults, range: range)
         let parsed = Node(markdown: string)
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
+        var result: [CodeBlock] = []
         
         for el in parsed?.children ?? [] {
             guard let t = NodeType(rawValue: el.type.rawValue) else { continue }
             
             let start = scalars.index(lineNumbers[Int(el.start.line-1)], offsetBy: Int(el.start.column-1))
             let end = scalars.index(lineNumbers[Int(el.end.line-1)], offsetBy: Int(el.end.column-1))
+            guard start <= end else { continue } // todo should be error?
             let range = start...end
-            
+            let nsRange = NSRange(range, in: string)
             switch t {
             case .heading:
-                addAttribute(.foregroundColor, value: NSColor.systemPink, range: NSRange(range, in: string))
+                addAttribute(.foregroundColor, value: NSColor.systemPink, range: nsRange)
             case .code_block:
-                addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize), range: NSRange(range, in: string))
+                addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize), range: nsRange)
+                result.append(CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!))
             default:
                 ()
             }
         }
         endEditing()
+        return result
     }
 }
