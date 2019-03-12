@@ -7,34 +7,7 @@
 
 import Foundation
 import CommonMark
-
-enum NodeType: UInt32 {
-    case none
-    case document
-    case block_quote
-    case list
-    case item
-    case code_block
-    case html_block
-    case custom_block
-    case paragraph
-    case heading
-    case thematic_break
-    case first_block
-    case last_block
-    case text
-    case softbreak
-    case linebreak
-    case code
-    case html_inline
-    case custom_inline
-    case emph
-    case strong
-    case link
-    case image
-    case first_inline
-    case last_inline
-}
+import Ccmark
 
 extension String.UnicodeScalarView {
     var lineIndices: [String.Index] {
@@ -52,6 +25,7 @@ import Cocoa
 
 let fontSize: CGFloat = 14
 let defaults: [NSAttributedString.Key: Any] = [
+    .backgroundColor: NSColor.textBackgroundColor,
     .foregroundColor: NSColor.textColor,
     .font: NSFont.systemFont(ofSize: fontSize)
 ]
@@ -62,35 +36,42 @@ struct CodeBlock {
     let text: String
 }
 
+extension CommonMark.Node {
+    func visitAll(_ callback: (Node) -> ()) {
+        for c in children {
+            callback(c)
+            c.visitAll(callback)
+        }
+    }
+}
+
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
     func highlight() -> [CodeBlock] {
         beginEditing()
         setAttributes(defaults, range: range)
-        let parsed = Node(markdown: string)
+        guard let parsed = Node(markdown: string) else { return [] }
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
         var result: [CodeBlock] = []
-        
-        for el in parsed?.children ?? [] {
-            guard let t = NodeType(rawValue: el.type.rawValue) else { continue }
-            
+        parsed.visitAll { el in
+            guard el.start.column > 0 && el.start.line > 0 else { return }
             let start = scalars.index(lineNumbers[Int(el.start.line-1)], offsetBy: Int(el.start.column-1))
             let end = scalars.index(lineNumbers[Int(el.end.line-1)], offsetBy: Int(el.end.column-1))
-            guard start <= end else { continue } // todo should be error?
+            guard start <= end else { return } // todo should be error?
             let range = start...end
             let nsRange = NSRange(range, in: string)
-            switch t {
-            case .heading:
+            switch el.type {
+            case CMARK_NODE_HEADING:
                 addAttribute(.foregroundColor, value: NSColor.systemPink, range: nsRange)
-            case .code_block:
-                addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize), range: nsRange)
+            case CMARK_NODE_CODE_BLOCK:
+                addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize)!, range: nsRange)
                 result.append(CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!))
-                let att = ResultAttachment.attachment(text: "Hello World!")
-                addAttribute(.attachment, value: att, range: nsRange)
+                if el.fenceInfo == "swift" {
+                }
             default:
-                ()
+                print(el.type)
             }
         }
         endEditing()

@@ -155,16 +155,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         field.textColor = .textColor
         field.insertionPointColor = .textColor
         
-//        let defaultText = """
-//        ```swift
-//        1+1
-//        ```
-//        """
-        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/02-Collections.md")
+        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
         field.textStorage?.setAttributedString(NSAttributedString(string: defaultText))
-        
-        
-        
 
         let scrollView2 = NSScrollView(frame: right)
         scrollView2.borderType = .noBorder

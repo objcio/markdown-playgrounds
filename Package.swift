@@ -13,7 +13,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "playground-simplified",
-            dependencies: ["CommonMark", "CcMark"]),
+            dependencies: ["CommonMark", "Ccmark"]),
         .testTarget(
             name: "playground-simplifiedTests",
             dependencies: ["playground-simplified"]),
