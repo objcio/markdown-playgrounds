@@ -2,41 +2,78 @@ import CommonMark
 import AppKit
 
 
-class REPL {
-    var process: Process!
-    let stdIn = Pipe()
-    let stdOut = Pipe()
-    let stdErr = Pipe()
-    let onStdOut: (String) -> ()
-    let onStdErr: (String) -> ()
+struct REPLParser {
+    var buffer: Substring = "" {
+        didSet { parse() }
+    }
+    private let onResult: (String) -> ()
+    private let marker = UUID().uuidString
     
-    var token: Any?
+    init(onResult: @escaping (String) -> ()) {
+        self.onResult = onResult
+    }
+    
+    var startMarker: String { return "<\(marker)" }
+    var endMarker: String { return ">\(marker)" }
+
+    mutating func parse() {
+        guard
+            let startRange = buffer.range(of: startMarker),
+            let endRange = buffer.range(of: endMarker)
+        else { return }
+        let output = buffer[startRange.upperBound..<endRange.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+        buffer = buffer[endRange.upperBound...]
+        onResult(output)
+    }
+}
+
+class REPL {
+    private var process: Process!
+    private let stdIn = Pipe()
+    private let onStdOut: (String) -> ()
+    private let onStdErr: (String) -> ()
+    private var token: Any?
+    private let queue = DispatchQueue(label: "REPL Queue")
+    private let marker = UUID().uuidString
+    private var stdOutParser: REPLParser!
+    private var stdErrBuffer = ""
+    private var started = false
     
     init(onStdOut: @escaping (String) -> (), onStdErr: @escaping (String) -> ()) {
-        self.process = Process()
-        self.process.launchPath = "/usr/bin/swift"
-        self.process.standardInput = self.stdIn
-        self.process.standardOutput = self.stdOut
-        self.process.standardError = self.stdErr
-        self.process.launch()
         self.onStdOut = onStdOut
         self.onStdErr = onStdErr
-        
+        self.stdOutParser = REPLParser { [unowned self] output in
+            self.onStdOut(output)
+            let err = self.stdErrBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !err.isEmpty { self.onStdErr(err) }
+            self.stdErrBuffer = ""
+        }
+
+        let stdOut = Pipe()
+        let stdErr = Pipe()
+        self.process = Process()
+        self.process.launchPath = "/usr/bin/swift"
+        self.process.standardInput = stdIn
+        self.process.standardOutput = stdOut
+        self.process.standardError = stdErr
+        self.process.launch()
+
         // See: https://stackoverflow.com/questions/29548811/real-time-nstask-output-to-nstextview-with-swift
         token = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: nil, queue: OperationQueue.main) { [unowned self] note in
             let handle = note.object as! FileHandle
+            defer { handle.waitForDataInBackgroundAndNotify() }
             let data = handle.availableData
+            guard self.started else { return }
             let str = String(data: data, encoding: .utf8)!
-            if handle === self.stdOut.fileHandleForReading {
-                self.onStdOut(str)
+            if handle === stdOut.fileHandleForReading {
+                self.stdOutParser.buffer += str
             } else {
-                self.onStdErr(str)
+                self.stdErrBuffer += str
             }
-            handle.waitForDataInBackgroundAndNotify()
         }
         
-        self.stdOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
-        self.stdErr.fileHandleForReading.waitForDataInBackgroundAndNotify()
+        stdOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
+        stdErr.fileHandleForReading.waitForDataInBackgroundAndNotify()
     }
     
     deinit {
@@ -44,14 +81,16 @@ class REPL {
     }
     
     func evaluate(_ s: String) {
-        let marker = UUID().uuidString
-        let statements = """
-        print("start: \(marker)")
-        \(s)
-        print("end: \(marker)")
-        
-        """
-        self.stdIn.fileHandleForWriting.write(statements.data(using: .utf8)!)
+        started = true
+        queue.async {
+            let statements = """
+            print("\(self.stdOutParser.startMarker)")
+            \(s)
+            print("\(self.stdOutParser.endMarker)")
+            
+            """
+            self.stdIn.fileHandleForWriting.write(statements.data(using: .utf8)!)
+        }
     }
 }
 
@@ -69,10 +108,11 @@ class Highlighter {
     init(textView: NSTextView, output: NSTextView) {
         self.editor = textView
         repl = REPL(onStdOut: {
-            output.textStorage?.append(NSAttributedString(string: $0, attributes: stdOutAttributes))
+            let text = $0.isEmpty ? "No output" : $0
+            output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
             output.scrollToEndOfDocument(nil)
         }, onStdErr: {
-            output.textStorage?.append(NSAttributedString(string: $0, attributes: stdErrAttributes))
+            output.textStorage?.append(NSAttributedString(string: $0 + "\n", attributes: stdErrAttributes))
             output.scrollToEndOfDocument(nil)
         })
         observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: textView, queue: nil) { [unowned self] note in
@@ -112,13 +152,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 final class ViewController: NSViewController {
     var highlighter: Highlighter!
-    var splitView = NSSplitView(frame: NSRect(origin: .zero, size: CGSize(width: 600, height: 400)))
+    var splitView = NSSplitView()
     var editor: NSTextView!
     var output: NSTextView!
 
     override func loadView() {
         let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
-        let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 0))
+        let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 30))
         self.editor = editor
         self.output = output
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
