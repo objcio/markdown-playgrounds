@@ -23,6 +23,8 @@ func textView(isEditable: Bool, inset: CGSize) -> (NSScrollView, NSTextView) {
     textView.isEditable = isEditable
     textView.textContainerInset = inset
     textView.autoresizingMask = [.width]
+    textView.isAutomaticQuoteSubstitutionEnabled = false
+    textView.isAutomaticDashSubstitutionEnabled = false
     scrollView.documentView = textView
     return (scrollView, textView)
 }
