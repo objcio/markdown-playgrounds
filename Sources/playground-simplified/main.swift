@@ -2,21 +2,6 @@ import CommonMark
 import AppKit
 
 
-extension Pipe {
-    func readUntil(suffix str: String) -> String {
-        var all = Data()
-        while true {
-            fileHandleForReading.waitForDataInBackgroundAndNotify()
-            let data = fileHandleForReading.availableData
-            all.append(data)
-            if let s = String(data: all, encoding: .utf8) {
-                if s.hasSuffix(str) { return String(s.dropLast(str.count)) }
-            }
-        }
-    }
-}
-
-
 class REPL {
     var process: Process!
     let stdIn = Pipe()
