@@ -54,6 +54,15 @@ extension NSApplication {
         let execute = NSMenuItem(title: "Execute", action: #selector(ViewController.execute), keyEquivalent: "e")
         codeMenu.submenu?.addItem(execute)
         
+        let fileMenu = NSMenuItem()
+        fileMenu.submenu = NSMenu(title: "File")
+        fileMenu.submenu?.addItem(NSMenuItem(title: "New", action: #selector(NSDocumentController.newDocument(_:)), keyEquivalent: "n"))
+        fileMenu.submenu?.addItem(NSMenuItem(title: "Open", action: #selector(NSDocumentController.openDocument(_:)), keyEquivalent: "o"))
+        // todo: open recent
+        fileMenu.submenu?.addItem(NSMenuItem.separator())
+        fileMenu.submenu?.addItem(NSMenuItem(title: "Close", action: #selector(NSDocument.close), keyEquivalent: "w"))
+        fileMenu.submenu?.addItem(NSMenuItem(title: "Save…", action: #selector(NSDocument.save(_:)), keyEquivalent: "s"))
+        
         let editMenu = NSMenuItem()
         editMenu.submenu = NSMenu(title: "Edit")
         editMenu.submenu?.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
@@ -70,6 +79,7 @@ extension NSApplication {
         
         let mainMenu = NSMenu(title: "Main Menu")
         mainMenu.addItem(appMenu)
+        mainMenu.addItem(fileMenu)
         mainMenu.addItem(editMenu)
         mainMenu.addItem(codeMenu)
         mainMenu.addItem(windowMenu)
