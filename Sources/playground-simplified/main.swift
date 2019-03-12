@@ -131,6 +131,8 @@ final class MyDocumentController: NSDocumentController {
     }
 }
 
+extension String: Error { } // todo
+
 final class MarkdownDocument: NSDocument {
     var contentViewController: ViewController?
     var text: String?
@@ -143,6 +145,15 @@ final class MarkdownDocument: NSDocument {
         text = String(data: data, encoding: .utf8)!
         contentViewController?.text = text ?? ""
     }
+    
+    override func write(to url: URL, ofType typeName: String) throws {
+        guard let text = contentViewController?.editor.attributedString().string else {
+            throw "Can't get text"
+        }
+        let data = text.data(using: .utf8)!
+        try data.write(to: url)
+    }
+    
     
     override func makeWindowControllers() {
         let window = NSWindow(contentRect: NSMakeRect(200, 200, 400, 200),
@@ -183,24 +194,6 @@ final class ViewController: NSViewController {
         c.priority = .defaultHigh
         c.isActive = true
         self.text = text + "" // trigger didSet
-        
-//        editor.textStorage?.setAttributedString(NSAttributedString(string: """
-//        Hello, world.
-//
-//        *This is my text* .
-//
-//        - Here’s a list
-//        - And another item
-//        - And another
-//
-//        This is a paragraph, a [link](https://www.objc.io), *bold*, **emph**, and ***both***.
-//
-//        # A header with `inline` and *emph*.
-//
-//        ```swift
-//        1 + 1
-//        ```
-//        """))
         
         splitView.isVertical = true
         splitView.dividerStyle = .thin
