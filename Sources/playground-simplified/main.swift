@@ -211,14 +211,14 @@ final class MarkdownDocument: NSDocument {
                               defer: false,
                               screen: nil)
         window.makeKeyAndOrderFront(nil)
-
-        window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
         let wc = NSWindowController(window: window)
         let vc = ViewController()
         vc.text = self.text ?? ""
         wc.contentViewController = vc
         self.contentViewController = vc
         addWindowController(wc)
+        vc.preferredContentSize = CGSize(width: 600, height: 400)
+        window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
     }
 }
 
