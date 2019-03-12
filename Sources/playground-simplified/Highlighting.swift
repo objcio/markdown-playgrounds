@@ -64,13 +64,12 @@ struct Attributes {
 
 extension Attributes {
     var atts: [NSAttributedString.Key:Any] {
-        var atts: [NSAttributedString.Key: Any] = [
+        return [
             .font: font,
             .foregroundColor: textColor,
             .paragraphStyle: paragraphStyle,
             .backgroundColor: backgroundColor
         ]
-        return atts
     }
 }
 

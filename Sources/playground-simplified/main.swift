@@ -126,21 +126,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.makeKeyAndOrderFront(nil)
         window.setFrameAutosaveName("PlaygroundWindow")
         
-        let editorScrollView = NSScrollView()
-        editorScrollView.hasVerticalScroller = true
-        let editor = NSTextView()
-        editor.autoresizingMask = [.width]
-        editor.textContainerInset = CGSize(width: 30, height: 30)
-        editorScrollView.documentView = editor
-
-        let outputScrollView = NSScrollView()
-        outputScrollView.hasVerticalScroller = true
-        output = NSTextView()
-        output.isEditable = false
-        output.textContainerInset = CGSize(width: 10, height: 0)
-        output.autoresizingMask = [.width]
-        outputScrollView.documentView = output
-
+        let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
+        let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 0))
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
@@ -172,7 +159,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         splitView.addArrangedSubview(editorScrollView)
         splitView.addArrangedSubview(outputScrollView)
         splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
-        
+
+        highlighter = Highlighter(textView: editor, output: output)
+        highlighter.highlight()
+
         window.contentView = splitView
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(editor)
@@ -180,30 +170,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 
-// Minimal example from https://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html
-let app = NSApplication.shared
-NSApp.setActivationPolicy(.regular)
-let mainMenu = NSMenu(title: "My Menu")
-let appItem = NSMenuItem()
-let edit = NSMenuItem()
-edit.title = "Edit"
-edit.submenu = NSMenu(title: "Edit")
-
-let appMenu = NSMenu()
-let appName = ProcessInfo.processInfo.processName
-let quitTitle = "Quit \(appName)"
-let quitItem = NSMenuItem(title: quitTitle, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-appMenu.addItem(quitItem)
-appItem.submenu = appMenu
-
-
-let execute = NSMenuItem(title: "Execute", action: #selector(AppDelegate.execute), keyEquivalent: "e")
-edit.submenu?.addItem(execute)
-mainMenu.addItem(appItem)
-mainMenu.addItem(edit)
-app.mainMenu = mainMenu
-
-
 let delegate = AppDelegate()
-app.delegate = delegate
+let app = application(delegate: delegate)
 app.run()
