@@ -154,6 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         field.backgroundColor = .textBackgroundColor
         field.textColor = .textColor
         field.insertionPointColor = .textColor
+        field.textContainerInset = CGSize(width: 30, height: 30)
         
         let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
         field.textStorage?.setAttributedString(NSAttributedString(string: defaultText))
@@ -184,7 +185,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         field2.textStorage?.setAttributedString(NSAttributedString(string: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."))
 */
         
-        _ = NSView(frame: rect)
+//        _ = NSView(frame: rect)
 //        container.addSubview(field)
 //        container.addSubview(field2)
 //        container.autoresizingMask = [.width, .height]

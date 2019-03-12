@@ -71,7 +71,8 @@ extension NSMutableAttributedString {
                 if el.fenceInfo == "swift" {
                 }
             default:
-                print(el.type)
+                ()
+//                print(el.type)
             }
         }
         endEditing()
