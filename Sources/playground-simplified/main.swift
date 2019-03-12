@@ -101,13 +101,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                           backing: .buffered,
                           defer: false,
                           screen: nil)
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        let sharedController = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
+    }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         let vc = ViewController()
         window.makeKeyAndOrderFront(nil)
         window.contentViewController = vc
         window.setFrameAutosaveName("PlaygroundWindow")
+        
+        
     }
+}
+
+final class MyDocumentController: NSDocumentController {
+    override var documentClassNames: [String] { return ["MyDocument"] }
+    override var defaultType: String? { return nil } // todo
+}
+
+final class MyDocument: NSDocument {
+    
 }
 
 final class ViewController: NSViewController {
