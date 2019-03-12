@@ -127,12 +127,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc func execute() {
         highlighter!.execute()
-//        output?.textStorage?.append(NSAttributedString(string: out))
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-//        window.contentViewController = NSViewController()
-        
         window.makeKeyAndOrderFront(nil)
         window.setFrameAutosaveName("PlaygroundWindow")
         let scrollView = NSScrollView(frame: window.contentView!.frame)
@@ -156,8 +153,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         field.insertionPointColor = .textColor
         field.textContainerInset = CGSize(width: 30, height: 30)
         
-        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
-        field.textStorage?.setAttributedString(NSAttributedString(string: defaultText))
+//        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
+//        field.textStorage?.setAttributedString(NSAttributedString(string: "defaultText"))
 
         let scrollView2 = NSScrollView(frame: right)
         scrollView2.borderType = .noBorder
@@ -180,21 +177,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         highlighter = Highlighter(textView: field, output: field2)
         highlighter?.highlight()
-        
-        /*
-        field2.textStorage?.setAttributedString(NSAttributedString(string: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."))
-*/
-        
-//        _ = NSView(frame: rect)
-//        container.addSubview(field)
-//        container.addSubview(field2)
-//        container.autoresizingMask = [.width, .height]
-//        container.wantsLayer = true
-//        container.layer!.backgroundColor = NSColor.red.cgColor
-
-        print(rect)
-        print(scrollView.contentView.bounds)
-        print(right)
         
         scrollView.addFloatingSubview(scrollView2, for: .vertical)
         scrollView.documentView = field

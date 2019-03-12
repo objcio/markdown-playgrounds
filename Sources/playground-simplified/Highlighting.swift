@@ -79,33 +79,3 @@ extension NSMutableAttributedString {
         return result
     }
 }
-
-class ResultAttachment: NSTextAttachment {
-    static func attachment(text: String) -> ResultAttachment {
-        let att = self.init()
-        let cell = ResultAttachmentCell(textCell: text)
-        att.attachmentCell = cell
-        return att
-    }
-}
-
-class ResultAttachmentCell: NSTextAttachmentCell {
-    var text: String
-//    init(text: String) {
-//        self.text = text
-//        super.init(textCell: text)
-//    }
-    
-    override init(textCell text: String) {
-        self.text = text
-        super.init(textCell: text)
-    }
-    
-    required init(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-        
-    override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
-        (text as NSString).draw(in: cellFrame, withAttributes: nil)
-    }
-}
