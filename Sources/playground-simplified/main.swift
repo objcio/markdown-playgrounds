@@ -15,7 +15,8 @@ extension Pipe {
         }
     }
 }
-// for stdout reading, see https://stackoverflow.com/questions/29548811/real-time-nstask-output-to-nstextview-with-swift
+
+
 class REPL {
     var process: Process!
     let stdIn = Pipe()
@@ -24,8 +25,7 @@ class REPL {
     let onStdOut: (String) -> ()
     let onStdErr: (String) -> ()
     
-    let stdOutQueue = DispatchQueue(label: "stdout")
-    let stdErrQueue = DispatchQueue(label: "stderr")
+    var token: Any?
     
     init(onStdOut: @escaping (String) -> (), onStdErr: @escaping (String) -> ()) {
         self.process = Process()
@@ -37,38 +37,36 @@ class REPL {
         self.onStdOut = onStdOut
         self.onStdErr = onStdErr
         
-        stdOutQueue.async {
-            while true {            self.stdOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
-                let data = self.stdOut.fileHandleForReading.availableData
-                let str = String(data: data, encoding: .utf8)!
-                DispatchQueue.main.async {
-                    self.onStdOut(str)
-                }
+        // See: https://stackoverflow.com/questions/29548811/real-time-nstask-output-to-nstextview-with-swift
+        token = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: nil, queue: OperationQueue.main) { [unowned self] note in
+            let handle = note.object as! FileHandle
+            let data = handle.availableData
+            let str = String(data: data, encoding: .utf8)!
+            if handle === self.stdOut.fileHandleForReading {
+                self.onStdOut(str)
+            } else {
+                self.onStdErr(str)
             }
+            handle.waitForDataInBackgroundAndNotify()
         }
         
-        stdErrQueue.async {
-            while true {            self.stdErr.fileHandleForReading.waitForDataInBackgroundAndNotify()
-                let data = self.stdErr.fileHandleForReading.availableData
-                let str = String(data: data, encoding: .utf8)!
-                DispatchQueue.main.async {
-                    self.onStdErr(str)
-                }
-            }
-        }
-//        _ = stdOut.fileHandleForReading.availableData // read the initial prompt
+        self.stdOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
+        self.stdErr.fileHandleForReading.waitForDataInBackgroundAndNotify()
     }
     
-    func write(_ s: String) {
-        let longStr = UUID().uuidString
-        let theStr = """
-        print("start: \(longStr)")
+    deinit {
+        if let t = token { NotificationCenter.default.removeObserver(t) }
+    }
+    
+    func evaluate(_ s: String) {
+        let marker = UUID().uuidString
+        let statements = """
+        print("start: \(marker)")
         \(s)
-        print("end: \(longStr)")
+        print("end: \(marker)")
         
         """
-        self.stdIn.fileHandleForWriting.write(theStr.data(using: .utf8)!)
-//        return self.stdOut.readUntil(suffix: longStr + "\r\n")
+        self.stdIn.fileHandleForWriting.write(statements.data(using: .utf8)!)
     }
 }
 
@@ -77,14 +75,14 @@ let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([
 
 // From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
 class Highlighter {
-    let textView: NSTextView
+    let editor: NSTextView
     var observationToken: Any?
     var codeBlocks: [CodeBlock] = []
     
     let repl: REPL
     
     init(textView: NSTextView, output: NSTextView) {
-        self.textView = textView
+        self.editor = textView
         repl = REPL(onStdOut: {
             output.textStorage?.append(NSAttributedString(string: $0, attributes: stdOutAttributes))
             output.scrollToEndOfDocument(nil)
@@ -102,14 +100,13 @@ class Highlighter {
     }
     
     func highlight() {
-        codeBlocks = textView.textStorage?.highlight() ?? []
+        codeBlocks = editor.textStorage?.highlight() ?? []
     }
     
     func execute() {
-        guard let r = textView.selectedRanges.first?.rangeValue else { return }
-        guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return } // todo
-        
-        repl.write(found.text)
+        guard let r = editor.selectedRanges.first?.rangeValue else { return }
+        guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return }
+        repl.evaluate(found.text)
     }
 }
 
