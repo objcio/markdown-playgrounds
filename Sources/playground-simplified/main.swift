@@ -21,9 +21,18 @@ struct REPLParser {
             let startRange = buffer.range(of: startMarker),
             let endRange = buffer.range(of: endMarker)
         else { return }
-        let output = buffer[startRange.upperBound..<endRange.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+        let start = buffer.index(after: startRange.upperBound)
+        let end = buffer.index(before: endRange.lowerBound)
+        let output = buffer[start..<end]
+        let lines: [Substring] = output.split(separator: "\n").map { line in
+            var result = line
+            if line.hasPrefix("$R"), let colonIdx = result.firstIndex(of: ":") {
+                result = line[line.index(colonIdx, offsetBy: 2)...]
+            }
+            return result
+        }
         buffer = buffer[endRange.upperBound...]
-        onResult(output)
+        onResult(lines.joined(separator: "\n"))
     }
 }
 
