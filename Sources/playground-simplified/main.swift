@@ -144,7 +144,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
+        
+        editor.textStorage?.setAttributedString(NSAttributedString(string: """
+		Hello, world.
 
+		*This is my text* .
+
+		- Here’s a list
+		- And another item
+		- And another
+
+		This is a paragraph, a [link](https://www.objc.io), *bold*, **emph**, and ***both***.
+
+		# A header with `inline` and *emph*.
+
+		```swift
+		1 + 1
+		```
+		"""))
+        
         highlighter = Highlighter(textView: editor, output: output)
         highlighter.highlight()
         
