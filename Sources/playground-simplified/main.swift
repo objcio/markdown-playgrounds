@@ -116,7 +116,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                           defer: false,
                           screen: nil)
     var highlighter: Highlighter!
-    var output: NSTextView!
     
     @objc func execute() {
         highlighter!.execute()
@@ -149,9 +148,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 		1 + 1
 		```
 		"""))
-        
-        highlighter = Highlighter(textView: editor, output: output)
-        highlighter.highlight()
         
         let splitView = NSSplitView()
         splitView.isVertical = true
