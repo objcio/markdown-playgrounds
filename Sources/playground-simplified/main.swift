@@ -22,7 +22,7 @@ struct REPLParser {
             let endRange = buffer.range(of: endMarker)
         else { return }
         let start = buffer.index(after: startRange.upperBound)
-        let end = buffer.index(before: endRange.lowerBound)
+        let end = endRange.lowerBound
         let output = buffer[start..<end]
         let lines: [Substring] = output.split(separator: "\n").map { line in
             var result = line
