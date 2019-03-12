@@ -75,6 +75,17 @@ extension Attributes {
 
 let defaultAttributes = Attributes(family: "Helvetica", size: fontSize, bold: false, italic: false, textColor: NSColor.textColor, backgroundColor: NSColor.textBackgroundColor, firstlineHeadIndent: 0, headIndent: 0, tabStops: [], alignment: NSTextAlignment.left, lineHeightMultiple: 1.1)
 let fontSize: CGFloat = 18
+let accentColors: [NSColor] = [
+    // From: https://ethanschoonover.com/solarized/#the-values
+    (181, 137,   0),
+    (203,  75,  22),
+    (220,  50,  47),
+    (211,  54, 130),
+    (108, 113, 196),
+    ( 38, 139, 210),
+    ( 42, 161, 152),
+    (133, 153,   0)
+].map { NSColor(calibratedRed: CGFloat($0.0) / 255, green: CGFloat($0.1) / 255, blue: CGFloat($0.2) / 255, alpha: 1)}
 
 struct CodeBlock {
     let range: NSRange
@@ -112,8 +123,10 @@ extension NSMutableAttributedString {
             let nsRange = NSRange(range, in: string)
             switch el.type {
             case CMARK_NODE_HEADING:
-                attributes.textColor = NSColor.systemPink
+                attributes.textColor = accentColors[1]
+                attributes.size = fontSize + 2 + (CGFloat(6-el.headerLevel)*1.7)
                 addAttribute(.foregroundColor, value: attributes.textColor, range: nsRange)
+                addAttribute(.font, value: attributes.font, range: nsRange)
             case CMARK_NODE_EMPH:
                 attributes.italic = true
                 addAttribute(.font, value: attributes.font, range: nsRange)
