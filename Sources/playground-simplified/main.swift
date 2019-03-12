@@ -1,13 +1,6 @@
 import CommonMark
 import AppKit
 
-// Minimal example from https://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html
-let app = NSApplication.shared
-NSApp.setActivationPolicy(.regular)
-let mainMenu = NSMenu(title: "My Menu")
-let appItem = NSMenuItem()
-let edit = NSMenuItem()
-edit.title = "Edit"
 
 extension Pipe {
     func readUntil(suffix str: String) -> String {
@@ -79,7 +72,7 @@ class REPL {
     }
 }
 
-let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!]
+let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!, .foregroundColor: NSColor.textColor]
 let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([.foregroundColor: NSColor.red], uniquingKeysWith: { $1 })
 
 // From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
@@ -122,8 +115,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                           backing: .buffered,
                           defer: false,
                           screen: nil)
-    var highlighter: Highlighter?
-    var output: NSTextView?
+    var highlighter: Highlighter!
+    var output: NSTextView!
     
     @objc func execute() {
         highlighter!.execute()
@@ -132,60 +125,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         window.makeKeyAndOrderFront(nil)
         window.setFrameAutosaveName("PlaygroundWindow")
-        let scrollView = NSScrollView(frame: window.contentView!.frame)
-        scrollView.borderType = .noBorder
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autoresizingMask = [.width, .height]
         
-        let sidebarWidth: CGFloat = 200.0
-        let rect = CGRect(origin: .zero, size: scrollView.contentSize)
-        let (right, left) = rect.divided(atDistance: sidebarWidth, from: .maxXEdge)
+        let editorScrollView = NSScrollView()
+        editorScrollView.hasVerticalScroller = true
+        let editor = NSTextView()
+        editor.autoresizingMask = [.width]
+        editor.textContainerInset = CGSize(width: 30, height: 30)
+        editorScrollView.documentView = editor
 
-        let field = NSTextView(frame: left)
-        field.autoresizingMask = [.width, .height, .minYMargin]
-        field.backgroundColor = .white
-        field.textContainer?.containerSize = CGSize(width: left.width, height: .greatestFiniteMagnitude)
-        field.isContinuousSpellCheckingEnabled = false
-        field.isEditable = true
-        field.backgroundColor = .textBackgroundColor
-        field.textColor = .textColor
-        field.insertionPointColor = .textColor
-        field.textContainerInset = CGSize(width: 30, height: 30)
-        
-//        let defaultText = try! String(contentsOfFile: "/Users/chris/objc.io/advanced-swift-book/Protocols.md")
-//        field.textStorage?.setAttributedString(NSAttributedString(string: "defaultText"))
+        let outputScrollView = NSScrollView()
+        outputScrollView.hasVerticalScroller = true
+        output = NSTextView()
+        output.isEditable = false
+        output.textContainerInset = CGSize(width: 10, height: 0)
+        output.autoresizingMask = [.width]
+        outputScrollView.documentView = output
 
-        let scrollView2 = NSScrollView(frame: right)
-        scrollView2.borderType = .noBorder
-        scrollView2.hasVerticalScroller = true
-        scrollView2.hasHorizontalScroller = false
-        scrollView2.autoresizingMask = [.minXMargin, .height]
+        let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
+        c.priority = .defaultHigh
+        c.isActive = true
+
+        highlighter = Highlighter(textView: editor, output: output)
+        highlighter.highlight()
         
-        let field2 = NSTextView(frame: CGRect(origin: .zero, size: scrollView2.contentSize))
-        field2.autoresizingMask = [.width, .height]
-        field2.backgroundColor = .white
-        field2.textContainer?.containerSize = CGSize(width: sidebarWidth, height: .greatestFiniteMagnitude)
-        field2.isContinuousSpellCheckingEnabled = false
-        field2.isEditable = false
-        field2.backgroundColor = .white
-        field2.textColor = .black
+        let splitView = NSSplitView()
+        splitView.isVertical = true
+        splitView.dividerStyle = .thin
+        splitView.addArrangedSubview(editorScrollView)
+        splitView.addArrangedSubview(outputScrollView)
+        splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
         
-        scrollView2.documentView = field2
-        
-        output = field2
-        
-        highlighter = Highlighter(textView: field, output: field2)
-        highlighter?.highlight()
-        
-        scrollView.addFloatingSubview(scrollView2, for: .vertical)
-        scrollView.documentView = field
-        window.contentView = scrollView
+        window.contentView = splitView
         window.makeKeyAndOrderFront(nil)
-        window.makeFirstResponder(field)
+        window.makeFirstResponder(editor)
     }
 }
 
+
+// Minimal example from https://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html
+let app = NSApplication.shared
+NSApp.setActivationPolicy(.regular)
+let mainMenu = NSMenu(title: "My Menu")
+let appItem = NSMenuItem()
+let edit = NSMenuItem()
+edit.title = "Edit"
+edit.submenu = NSMenu(title: "Edit")
 
 let appMenu = NSMenu()
 let appName = ProcessInfo.processInfo.processName
@@ -193,8 +177,6 @@ let quitTitle = "Quit \(appName)"
 let quitItem = NSMenuItem(title: quitTitle, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 appMenu.addItem(quitItem)
 appItem.submenu = appMenu
-edit.submenu = NSTextView.defaultMenu
-mainMenu.setSubmenu(NSTextView.defaultMenu, for: edit) // todo not entirely correct, should probably make the Edit menu ourselves.
 
 
 let execute = NSMenuItem(title: "Execute", action: #selector(AppDelegate.execute), keyEquivalent: "e")
@@ -206,5 +188,4 @@ app.mainMenu = mainMenu
 
 let delegate = AppDelegate()
 app.delegate = delegate
-app.activate(ignoringOtherApps: true)
 app.run()
