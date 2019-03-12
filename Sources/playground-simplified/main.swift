@@ -198,8 +198,8 @@ final class ViewController: NSViewController {
         highlighter.highlight()
     }
     
-    override func viewWillAppear() {
-        editor.becomeFirstResponder()
+    override func viewDidAppear() {
+        view.window!.makeFirstResponder(editor)
     }
     
     @objc func execute() {
