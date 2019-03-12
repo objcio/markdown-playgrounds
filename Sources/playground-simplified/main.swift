@@ -25,6 +25,7 @@ class REPL {
         // See: https://stackoverflow.com/questions/29548811/real-time-nstask-output-to-nstextview-with-swift
         token = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: nil, queue: OperationQueue.main) { [unowned self] note in
             let handle = note.object as! FileHandle
+            guard handle === self.stdOut.fileHandleForReading || handle == self.stdErr.fileHandleForReading else { return }
             let data = handle.availableData
             let str = String(data: data, encoding: .utf8)!
             if handle === self.stdOut.fileHandleForReading {
@@ -96,22 +97,11 @@ class Highlighter {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    let window = NSWindow(contentRect: NSMakeRect(200, 200, 400, 200),
-                          styleMask: [.titled, .closable, .miniaturizable, .resizable],
-                          backing: .buffered,
-                          defer: false,
-                          screen: nil)
     func applicationWillFinishLaunching(_ notification: Notification) {
         let sharedController = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let vc = ViewController()
-        window.makeKeyAndOrderFront(nil)
-        window.contentViewController = vc
-        window.setFrameAutosaveName("PlaygroundWindow")
-        
-        
     }
 }
 
@@ -142,12 +132,32 @@ final class MyDocumentController: NSDocumentController {
 }
 
 final class MarkdownDocument: NSDocument {
+    var contentViewController: ViewController?
+    var text: String?
+    
     override init() {
         super.init()
     }
     
     override func read(from data: Data, ofType typeName: String) throws {
-        Swift.print(data)
+        text = String(data: data, encoding: .utf8)!
+        contentViewController?.text = text ?? ""
+    }
+    
+    override func makeWindowControllers() {
+        let window = NSWindow(contentRect: NSMakeRect(200, 200, 400, 200),
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                              backing: .buffered,
+                              defer: false,
+                              screen: nil)
+        window.makeKeyAndOrderFront(nil)
+        window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
+        let wc = NSWindowController(window: window)
+        let vc = ViewController()
+        vc.text = self.text ?? ""
+        wc.contentViewController = vc
+        self.contentViewController = vc
+        addWindowController(wc)
     }
 }
 
@@ -156,6 +166,13 @@ final class ViewController: NSViewController {
     var splitView = NSSplitView(frame: NSRect(origin: .zero, size: CGSize(width: 600, height: 400)))
     var editor: NSTextView!
     var output: NSTextView!
+    
+    var text: String = "" {
+        didSet {
+            editor?.textStorage?.setAttributedString(NSAttributedString(string: text))
+            highlighter?.highlight()
+        }
+    }
 
     override func loadView() {
         let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
@@ -165,24 +182,25 @@ final class ViewController: NSViewController {
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
+        self.text = text + "" // trigger didSet
         
-        editor.textStorage?.setAttributedString(NSAttributedString(string: """
-        Hello, world.
-
-        *This is my text* .
-
-        - Here’s a list
-        - And another item
-        - And another
-
-        This is a paragraph, a [link](https://www.objc.io), *bold*, **emph**, and ***both***.
-
-        # A header with `inline` and *emph*.
-
-        ```swift
-        1 + 1
-        ```
-        """))
+//        editor.textStorage?.setAttributedString(NSAttributedString(string: """
+//        Hello, world.
+//
+//        *This is my text* .
+//
+//        - Here’s a list
+//        - And another item
+//        - And another
+//
+//        This is a paragraph, a [link](https://www.objc.io), *bold*, **emph**, and ***both***.
+//
+//        # A header with `inline` and *emph*.
+//
+//        ```swift
+//        1 + 1
+//        ```
+//        """))
         
         splitView.isVertical = true
         splitView.dividerStyle = .thin
