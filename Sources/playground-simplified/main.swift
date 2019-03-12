@@ -97,6 +97,10 @@ class Highlighter {
         }
     }
     
+    deinit {
+        if let t = observationToken { NotificationCenter.default.removeObserver(t) }
+    }
+    
     func highlight() {
         codeBlocks = textView.textStorage?.highlight() ?? []
     }
