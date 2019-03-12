@@ -5,6 +5,9 @@ import PackageDescription
 
 let package = Package(
     name: "playground-simplified",
+    platforms: [
+        .macOS(.v10_14)
+    ],
     dependencies: [
         .package(url: "https://github.com/objcio/commonmark-swift", .branch("swift-5")),
     ],
