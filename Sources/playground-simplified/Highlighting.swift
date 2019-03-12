@@ -87,11 +87,43 @@ extension NSMutableAttributedString {
             case .code_block:
                 addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize), range: nsRange)
                 result.append(CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!))
+                let att = ResultAttachment.attachment(text: "Hello World!")
+                addAttribute(.attachment, value: att, range: nsRange)
             default:
                 ()
             }
         }
         endEditing()
         return result
+    }
+}
+
+class ResultAttachment: NSTextAttachment {
+    static func attachment(text: String) -> ResultAttachment {
+        let att = self.init()
+        let cell = ResultAttachmentCell(textCell: text)
+        att.attachmentCell = cell
+        return att
+    }
+}
+
+class ResultAttachmentCell: NSTextAttachmentCell {
+    var text: String
+//    init(text: String) {
+//        self.text = text
+//        super.init(textCell: text)
+//    }
+    
+    override init(textCell text: String) {
+        self.text = text
+        super.init(textCell: text)
+    }
+    
+    required init(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+        
+    override func draw(withFrame cellFrame: NSRect, in controlView: NSView?) {
+        (text as NSString).draw(in: cellFrame, withAttributes: nil)
     }
 }
