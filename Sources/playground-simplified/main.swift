@@ -116,12 +116,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 final class MyDocumentController: NSDocumentController {
-    override var documentClassNames: [String] { return ["MyDocument"] }
-    override var defaultType: String? { return nil } // todo
+    override var documentClassNames: [String] { return ["MarkdownDocument"] }
+    override var defaultType: String? { return "MarkdownDocument" } // todo
+    override func documentClass(forType typeName: String) -> AnyClass? {
+//        assert(typeName == "net.daringfireball.markdown")
+        return MarkdownDocument.self
+    }
+    
+    override func openDocument(_ sender: Any?) {
+        let openPanel = NSOpenPanel()
+        beginOpenPanel(openPanel, forTypes: ["public.text"], completionHandler: { x in
+            switch x {
+            case NSApplication.ModalResponse.OK.rawValue:
+                for url in openPanel.urls {
+                    self.openDocument(withContentsOf: url, display: true, completionHandler: { (doc, bool, err) in
+                        print(doc, bool, err) // todo: handle error?
+                    })
+                }
+            default:
+                ()
+            }
+            
+        })
+    }
 }
 
-final class MyDocument: NSDocument {
+final class MarkdownDocument: NSDocument {
+    override init() {
+        super.init()
+    }
     
+    override func read(from data: Data, ofType typeName: String) throws {
+        Swift.print(data)
+    }
 }
 
 final class ViewController: NSViewController {
