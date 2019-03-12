@@ -119,53 +119,69 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                           backing: .buffered,
                           defer: false,
                           screen: nil)
-    var highlighter: Highlighter!
-    
-    @objc func execute() {
-        highlighter!.execute()
-    }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let vc = ViewController()
         window.makeKeyAndOrderFront(nil)
+        window.contentViewController = vc
         window.setFrameAutosaveName("PlaygroundWindow")
-        
+    }
+}
+
+final class ViewController: NSViewController {
+    var highlighter: Highlighter!
+    var splitView = NSSplitView(frame: NSRect(origin: .zero, size: CGSize(width: 600, height: 400)))
+    var editor: NSTextView!
+    var output: NSTextView!
+
+    override func loadView() {
         let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
         let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 0))
+        self.editor = editor
+        self.output = output
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
         
         editor.textStorage?.setAttributedString(NSAttributedString(string: """
-		Hello, world.
+        Hello, world.
 
-		*This is my text* .
+        *This is my text* .
 
-		- Here’s a list
-		- And another item
-		- And another
+        - Here’s a list
+        - And another item
+        - And another
 
-		This is a paragraph, a [link](https://www.objc.io), *bold*, **emph**, and ***both***.
+        This is a paragraph, a [link](https://www.objc.io), *bold*, **emph**, and ***both***.
 
-		# A header with `inline` and *emph*.
+        # A header with `inline` and *emph*.
 
-		```swift
-		1 + 1
-		```
-		"""))
+        ```swift
+        1 + 1
+        ```
+        """))
         
-        let splitView = NSSplitView()
         splitView.isVertical = true
         splitView.dividerStyle = .thin
         splitView.addArrangedSubview(editorScrollView)
         splitView.addArrangedSubview(outputScrollView)
         splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
-
+        splitView.autoresizingMask = [.width, .height]
+        splitView.autosaveName = "SplitView"
+        self.view = splitView
+    }
+    
+    override func viewDidLoad() {
         highlighter = Highlighter(textView: editor, output: output)
         highlighter.highlight()
-
-        window.contentView = splitView
-        window.makeKeyAndOrderFront(nil)
-        window.makeFirstResponder(editor)
+    }
+    
+    override func viewWillAppear() {
+        editor.becomeFirstResponder()
+    }
+    
+    @objc func execute() {
+        highlighter!.execute()
     }
 }
 

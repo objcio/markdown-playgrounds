@@ -49,7 +49,7 @@ extension NSApplication {
         
         let codeMenu = NSMenuItem()
         codeMenu.submenu = NSMenu(title: "Code")
-        let execute = NSMenuItem(title: "Execute", action: #selector(AppDelegate.execute), keyEquivalent: "e")
+        let execute = NSMenuItem(title: "Execute", action: #selector(ViewController.execute), keyEquivalent: "e")
         codeMenu.submenu?.addItem(execute)
         
         let editMenu = NSMenuItem()
