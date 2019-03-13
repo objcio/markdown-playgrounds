@@ -195,14 +195,13 @@ final class MarkdownDocument: NSDocument {
         contentViewController?.text = text ?? ""
     }
     
-    override func write(to url: URL, ofType typeName: String) throws {
+    override func data(ofType typeName: String) throws -> Data {
         guard let text = contentViewController?.editor.attributedString().string else {
             throw "Can't get text"
         }
-        let data = text.data(using: .utf8)!
-        try data.write(to: url)
+        contentViewController?.editor.breakUndoCoalescing()
+        return text.data(using: .utf8)!
     }
-    
     
     override func makeWindowControllers() {
         let window = NSWindow(contentRect: NSMakeRect(200, 200, 400, 200),
@@ -219,6 +218,24 @@ final class MarkdownDocument: NSDocument {
         addWindowController(wc)
         vc.preferredContentSize = CGSize(width: 600, height: 400)
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
+        
+        vc.editor.allowsUndo = true
+        vc.editor.delegate = self
+    }
+    
+    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        // todo: this must be a mistake, but for some reason this returns false (except for an initial empty document)
+        // todo: maybe this is the wrong selector?
+        if menuItem.action == #selector(NSDocument.save(_:)) && isDocumentEdited {
+            return true
+        }
+        return super.validateMenuItem(menuItem)
+    }
+}
+
+extension MarkdownDocument: NSTextViewDelegate {
+    func undoManager(for view: NSTextView) -> UndoManager? {
+        return undoManager
     }
 }
 
