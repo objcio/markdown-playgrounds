@@ -88,6 +88,7 @@ class REPL {
     
     deinit {
         if let t = token { NotificationCenter.default.removeObserver(t) }
+        process.terminate()
     }
     
     func evaluate(_ s: String) {
@@ -109,29 +110,34 @@ let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([
 
 // From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
 class Highlighter {
-    let editor: NSTextView
-    var observationToken: Any?
-    var codeBlocks: [CodeBlock] = []
+    private let editor: NSTextView
+    private let output: NSTextView
+    private var observationToken: Any?
+    private var codeBlocks: [CodeBlock] = []
+    private var repl: REPL!
     
-    let repl: REPL
-    
-    init(textView: NSTextView, output: NSTextView) {
-        self.editor = textView
-        repl = REPL(onStdOut: {
-            let text = $0.isEmpty ? "No output" : $0
-            output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
-            output.scrollToEndOfDocument(nil)
-        }, onStdErr: {
-            output.textStorage?.append(NSAttributedString(string: $0 + "\n", attributes: stdErrAttributes))
-            output.scrollToEndOfDocument(nil)
-        })
-        observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: textView, queue: nil) { [unowned self] note in
+    init(editor: NSTextView, output: NSTextView) {
+        self.editor = editor
+        self.output = output
+        setupREPL()
+        observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: editor, queue: nil) { [unowned self] note in
             self.highlight()
         }
     }
     
     deinit {
         if let t = observationToken { NotificationCenter.default.removeObserver(t) }
+    }
+    
+    private func setupREPL() {
+        repl = REPL(onStdOut: {
+            let text = $0.isEmpty ? "No output" : $0
+            self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
+            self.output.scrollToEndOfDocument(nil)
+        }, onStdErr: {
+            self.output.textStorage?.append(NSAttributedString(string: $0 + "\n", attributes: stdErrAttributes))
+            self.output.scrollToEndOfDocument(nil)
+        })
     }
     
     func highlight() {
@@ -143,25 +149,28 @@ class Highlighter {
         guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return }
         repl.evaluate(found.text)
     }
+    
+    func reset() {
+        setupREPL()
+    }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         let sharedController = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
     }
-    
+
     func applicationDidFinishLaunching(_ notification: Notification) {
     }
 }
 
 final class MyDocumentController: NSDocumentController {
     override var documentClassNames: [String] { return ["MarkdownDocument"] }
-    override var defaultType: String? { return "MarkdownDocument" } // todo
+    override var defaultType: String? { return "MarkdownDocument" }
     override func documentClass(forType typeName: String) -> AnyClass? {
-//        assert(typeName == "net.daringfireball.markdown")
         return MarkdownDocument.self
     }
-    
+
     override func openDocument(_ sender: Any?) {
         let openPanel = NSOpenPanel()
         beginOpenPanel(openPanel, forTypes: ["public.text"], completionHandler: { x in
@@ -175,7 +184,7 @@ final class MyDocumentController: NSDocumentController {
             default:
                 ()
             }
-            
+
         })
     }
 }
@@ -243,10 +252,10 @@ final class MarkdownDocument: NSDocument {
 }
 
 final class ViewController: NSViewController {
-    var highlighter: Highlighter!
-    var splitView = NSSplitView()
-    var editor: NSTextView!
-    var output: NSTextView!
+    private var highlighter: Highlighter!
+    private var splitView = NSSplitView()
+    private(set) var editor: NSTextView!
+    private(set) var output: NSTextView!
     
     var text: String = "" {
         didSet {
@@ -277,7 +286,7 @@ final class ViewController: NSViewController {
     }
     
     override func viewDidLoad() {
-        highlighter = Highlighter(textView: editor, output: output)
+        highlighter = Highlighter(editor: editor, output: output)
         highlighter.highlight()
     }
     
@@ -287,6 +296,11 @@ final class ViewController: NSViewController {
     
     @objc func execute() {
         highlighter!.execute()
+    }
+    
+    @objc func reset() {
+        output.textStorage?.setAttributedString(NSAttributedString(string: ""))
+        highlighter.reset()
     }
 }
 

@@ -53,7 +53,9 @@ extension NSApplication {
         codeMenu.submenu = NSMenu(title: "Code")
         let execute = NSMenuItem(title: "Execute", action: #selector(ViewController.execute), keyEquivalent: "e")
         codeMenu.submenu?.addItem(execute)
-        
+        codeMenu.submenu?.addItem(NSMenuItem.separator())
+        codeMenu.submenu?.addItem(NSMenuItem(title: "Reset", action: #selector(ViewController.reset), keyEquivalent: "r"))
+
         let fileMenu = NSMenuItem()
         fileMenu.submenu = NSMenu(title: "File")
         fileMenu.submenu?.addItem(NSMenuItem(title: "New", action: #selector(NSDocumentController.newDocument(_:)), keyEquivalent: "n"))
