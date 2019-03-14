@@ -63,7 +63,8 @@ extension NSApplication {
         fileMenu.submenu?.addItem(NSMenuItem.separator())
         fileMenu.submenu?.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
         fileMenu.submenu?.addItem(NSMenuItem(title: "Save…", action: #selector(NSDocument.save(_:)), keyEquivalent: "s"))
-        
+        fileMenu.submenu?.addItem(NSMenuItem(title: "Revert to Saved", action: #selector(NSDocument.revertToSaved(_:)), keyEquivalent: ""))
+
         let editMenu = NSMenuItem()
         editMenu.submenu = NSMenu(title: "Edit")
         editMenu.submenu?.addItem(NSMenuItem(title: "Undo", action: #selector(MarkdownDocument.undo), keyEquivalent: "z"))
