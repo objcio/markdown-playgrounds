@@ -60,7 +60,6 @@ extension NSApplication {
         fileMenu.submenu = NSMenu(title: "File")
         fileMenu.submenu?.addItem(NSMenuItem(title: "New", action: #selector(NSDocumentController.newDocument(_:)), keyEquivalent: "n"))
         fileMenu.submenu?.addItem(NSMenuItem(title: "Open", action: #selector(NSDocumentController.openDocument(_:)), keyEquivalent: "o"))
-        // todo: open recent
         fileMenu.submenu?.addItem(NSMenuItem.separator())
         fileMenu.submenu?.addItem(NSMenuItem(title: "Close", action: #selector(NSDocument.close), keyEquivalent: "w"))
         fileMenu.submenu?.addItem(NSMenuItem(title: "Save…", action: #selector(NSDocument.save(_:)), keyEquivalent: "s"))
