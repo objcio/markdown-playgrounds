@@ -224,7 +224,7 @@ final class MarkdownDocument: NSDocument {
         window.makeKeyAndOrderFront(nil)
         // TODO we should cascade new window positions
         window.center()
-        window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
+        window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
     }
     
     @objc func undo() {
