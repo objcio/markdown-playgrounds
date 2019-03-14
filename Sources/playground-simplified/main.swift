@@ -160,7 +160,7 @@ class Highlighter {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
-        let sharedController = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
+        _ = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -180,9 +180,7 @@ final class MyDocumentController: NSDocumentController {
             switch x {
             case NSApplication.ModalResponse.OK.rawValue:
                 for url in openPanel.urls {
-                    self.openDocument(withContentsOf: url, display: true, completionHandler: { (doc, bool, err) in
-                        print(doc, bool, err) // todo: handle error?
-                    })
+                    self.openDocument(withContentsOf: url, display: true, completionHandler: { (doc, bool, err) in })
                 }
             default:
                 ()
