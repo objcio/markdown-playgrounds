@@ -42,7 +42,6 @@ class REPL {
     private let onStdOut: (String) -> ()
     private let onStdErr: (String) -> ()
     private var token: Any?
-    private let queue = DispatchQueue(label: "REPL Queue")
     private let marker = UUID().uuidString
     private var stdOutParser: REPLParser!
     private var stdErrBuffer = ""
@@ -93,15 +92,13 @@ class REPL {
     
     func evaluate(_ s: String) {
         started = true
-        queue.async {
-            let statements = """
-            print("\(self.stdOutParser.startMarker)")
-            \(s)
-            print("\(self.stdOutParser.endMarker)")
-            
-            """
-            self.stdIn.fileHandleForWriting.write(statements.data(using: .utf8)!)
-        }
+        let statements = """
+        print("\(self.stdOutParser.startMarker)")
+        \(s)
+        print("\(self.stdOutParser.endMarker)")
+        
+        """
+        self.stdIn.fileHandleForWriting.write(statements.data(using: .utf8)!)
     }
 }
 
