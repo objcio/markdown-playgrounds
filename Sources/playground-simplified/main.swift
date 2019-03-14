@@ -170,7 +170,7 @@ final class MyDocumentController: NSDocumentController {
     override func documentClass(forType typeName: String) -> AnyClass? {
         return MarkdownDocument.self
     }
-
+    
     override func openDocument(_ sender: Any?) {
         let openPanel = NSOpenPanel()
         beginOpenPanel(openPanel, forTypes: ["public.text"], completionHandler: { x in
@@ -216,8 +216,9 @@ final class MarkdownDocument: NSDocument {
         let vc = ViewController()
         contentViewController = vc
         vc.text = self.text ?? ""
-        vc.preferredContentSize = CGSize(width: 800, height: 600)
         let window = NSWindow(contentViewController: vc)
+        window.setContentSize(NSSize(width: 800, height: 600))
+        window.minSize = NSSize(width: 400, height: 200)
         let wc = NSWindowController(window: window)
         wc.contentViewController = vc
         addWindowController(wc)
