@@ -9,25 +9,62 @@ import Foundation
 import SwiftSyntax
 import Foundation
 
-
 class SwiftHighlighter {
-    func highlight<S: StringProtocol>(_ code: S) throws -> [(range: Range<String.Index>, kind: Token.Kind)] {
+    typealias Result = [(range: Range<String.Index>, kind: Token.Kind)]
+    
+    var cache: [String:Result] = [:]
+    
+    func highlight(_ pieces: [String]) throws -> [Result] {
+        var combined: String = ""
+        
+        let ranges: [Range<String.Index>?] = pieces.map { piece in
+            if cache[piece] != nil { return nil }
+            let start = combined.endIndex
+            combined.append(piece)
+            let end = combined.endIndex
+            combined.append("\n\n")
+            return start..<end
+        }
+        
+        let allResults = try _highlight(combined)
+        var separated: [Result] = zip(ranges, ranges.indices).map { (range, index) in
+            if range == nil { return cache[pieces[index]]! } else { return [] }
+        }
+        for var el in allResults {
+            let currentIndex = ranges.index { $0?.contains(el.range.lowerBound) == true }!
+            let distance = combined.distance(from: ranges[currentIndex]!.lowerBound, to: el.range.lowerBound)
+            let piece = pieces[currentIndex]
+            let start = piece.index(piece.startIndex, offsetBy: distance)
+            let distance2 = combined.distance(from: el.range.lowerBound, to: el.range.upperBound)
+            let end = piece.index(start, offsetBy: distance2)
+            el.range = start..<end
+            separated[currentIndex].append(el)
+        }
+        for (k,v) in zip(pieces,separated) {
+            cache[k] = v
+        }
+        return separated
+    }
+    
+    
+    private func _highlight(_ code: String) throws -> Result {
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let fileName = "\(UUID().uuidString).swift"
         let file = tempDir.appendingPathComponent(fileName)
-        defer { try? FileManager.default.removeItem(at: file) }
         try code.write(to: file, atomically: true, encoding: .utf8)
-        
         let sourceFile = try SyntaxTreeParser.parse(file)
         let highlighter = SwiftHighlighterRewriter()
         _ = highlighter.visit(sourceFile)
         
-        return highlighter.result.map { t in
+        let result: Result = highlighter.result.map { t in
             let start = code.utf8.index(code.utf8.startIndex, offsetBy: t.start.utf8Offset)
             let end = code.utf8.index(code.utf8.startIndex, offsetBy: t.end.utf8Offset)
             let result = start..<end
             return (result, t.kind)
         }
+        
+        try? FileManager.default.removeItem(at: file)
+        return result
     }
 }
 

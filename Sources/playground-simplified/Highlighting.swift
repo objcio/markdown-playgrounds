@@ -108,7 +108,6 @@ extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
     func highlight() -> [CodeBlock] {
-        beginEditing()
         setAttributes(defaultAttributes.atts, range: range)
         guard let parsed = Node(markdown: string) else { return [] }
         let scalars = string.unicodeScalars
@@ -160,7 +159,6 @@ extension NSMutableAttributedString {
                 ()
             }
         }
-        endEditing()
         return result
     }
 }

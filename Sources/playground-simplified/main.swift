@@ -50,21 +50,31 @@ class HighlightController {
     
     func highlight() {
         guard let att = editor.textStorage else { return }
+        att.beginEditing()
         codeBlocks = att.highlight()
-        let nsString = (att.string as NSString)
-        for block in codeBlocks where block.fenceInfo == "swift" {
+        att.endEditing()        
+        guard !codeBlocks.isEmpty else { return }
             do {
-                let result = try swiftHighlighter.highlight(block.text)
-                let offset1 = (nsString.substring(with: block.range) as NSString).range(of: block.text).location
-                let start = block.range.location + offset1
-                for el in result {
-                    let offset = NSRange(el.range, in: block.text)
-                    let theRange = NSRange(location: start + offset.location, length: offset.length)
-                    editor.textStorage?.addAttribute(.foregroundColor, value: el.kind.color, range: theRange)
-                }
-            }
-            catch { print(error) }
-        }
+                let blocks = self.codeBlocks
+                let zipped = zip(blocks, try self.swiftHighlighter.highlight(blocks.map { $0.text }))
+                    att.beginEditing()
+                    let nsString = (att.string as NSString)
+                    for (block, result) in zipped {
+                        let offset1 = (nsString.substring(with: block.range) as NSString).range(of: block.text).location
+                        if offset1 == NSNotFound { continue } // error
+                        let start = block.range.location + offset1
+                        for el in result {
+                            let offset = NSRange(el.range, in: block.text)
+                            let theRange = NSRange(location: start + offset.location, length: offset.length)
+                            guard theRange.location >= 0, theRange.length < nsString.length else {
+                                print("invalid range: \(theRange)")
+                                continue
+                            }
+                            self.editor.textStorage?.addAttribute(.foregroundColor, value: el.kind.color, range: theRange)
+                        }
+                    }
+                    att.endEditing()
+            } catch { print(error) }
     }
     
     func execute() {
