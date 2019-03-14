@@ -51,8 +51,8 @@ extension NSApplication {
         
         let codeMenu = NSMenuItem()
         codeMenu.submenu = NSMenu(title: "Code")
-        let execute = NSMenuItem(title: "Execute", action: #selector(ViewController.execute), keyEquivalent: "e")
-        codeMenu.submenu?.addItem(execute)
+        codeMenu.submenu?.addItem(NSMenuItem(title: "Execute", action: #selector(ViewController.execute), keyEquivalent: "e"))
+        codeMenu.submenu?.addItem(NSMenuItem(title: "Execute All", action: #selector(ViewController.executeAll), keyEquivalent: "E"))
         codeMenu.submenu?.addItem(NSMenuItem.separator())
         codeMenu.submenu?.addItem(NSMenuItem(title: "Reset", action: #selector(ViewController.reset), keyEquivalent: "r"))
 

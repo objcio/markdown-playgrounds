@@ -147,6 +147,12 @@ class Highlighter {
         repl.evaluate(found.text)
     }
     
+    func executeAll() {
+        for b in codeBlocks {
+            repl.evaluate(b.text)
+        }
+    }
+    
     func reset() {
         setupREPL()
     }
@@ -294,6 +300,10 @@ final class ViewController: NSViewController {
     
     @objc func execute() {
         highlighter!.execute()
+    }
+    
+    @objc func executeAll() {
+        highlighter!.executeAll()
     }
     
     @objc func reset() {
