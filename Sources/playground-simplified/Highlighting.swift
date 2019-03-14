@@ -153,8 +153,6 @@ extension NSMutableAttributedString {
                 addAttribute(.backgroundColor, value: NSColor.windowBackgroundColor, range: nsRange)
                 addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize)!, range: nsRange)
                 result.append(CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!))
-                if el.fenceInfo == "swift" {
-                }
             default:
                 ()
             }

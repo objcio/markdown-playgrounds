@@ -51,11 +51,12 @@ class HighlightController {
     func highlight() {
         guard let att = editor.textStorage else { return }
         att.beginEditing()
-        codeBlocks = att.highlight()
-        att.endEditing()        
+        codeBlocks = att.highlight() // ideally, we'd pass in the cached values here (using some kind of protocol?) so that we can highlight them straight away.
+        att.endEditing()
         guard !codeBlocks.isEmpty else { return }
             do {
                 let blocks = self.codeBlocks
+                // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
                 let zipped = zip(blocks, try self.swiftHighlighter.highlight(blocks.map { $0.text }))
                     att.beginEditing()
                     let nsString = (att.string as NSString)
