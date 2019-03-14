@@ -204,19 +204,17 @@ final class MarkdownDocument: NSDocument {
     }
     
     override func makeWindowControllers() {
-        let window = NSWindow(contentRect: NSMakeRect(200, 200, 400, 200),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
-                              backing: .buffered,
-                              defer: false,
-                              screen: nil)
-        window.makeKeyAndOrderFront(nil)
-        let wc = NSWindowController(window: window)
         let vc = ViewController()
+        contentViewController = vc
         vc.text = self.text ?? ""
+        vc.preferredContentSize = CGSize(width: 800, height: 600)
+        let window = NSWindow(contentViewController: vc)
+        let wc = NSWindowController(window: window)
         wc.contentViewController = vc
-        self.contentViewController = vc
         addWindowController(wc)
-        vc.preferredContentSize = CGSize(width: 600, height: 400)
+        window.makeKeyAndOrderFront(nil)
+        // TODO we should cascade new window positions
+        window.center()
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
         
         vc.editor.allowsUndo = true
