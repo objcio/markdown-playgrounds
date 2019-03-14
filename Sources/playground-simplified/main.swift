@@ -216,9 +216,14 @@ final class MarkdownDocument: NSDocument {
         // TODO we should cascade new window positions
         window.center()
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "")
-        
-        vc.editor.allowsUndo = true
-        vc.editor.delegate = self
+    }
+    
+    @objc func undo() {
+        undoManager?.undo()
+    }
+    
+    @objc func redo() {
+        undoManager?.redo()
     }
     
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -227,13 +232,13 @@ final class MarkdownDocument: NSDocument {
         if menuItem.action == #selector(NSDocument.save(_:)) && isDocumentEdited {
             return true
         }
+        if menuItem.action == #selector(MarkdownDocument.undo) {
+            return undoManager?.canUndo == true
+        }
+        if menuItem.action == #selector(MarkdownDocument.redo) {
+            return undoManager?.canRedo == true
+        }
         return super.validateMenuItem(menuItem)
-    }
-}
-
-extension MarkdownDocument: NSTextViewDelegate {
-    func undoManager(for view: NSTextView) -> UndoManager? {
-        return undoManager
     }
 }
 
@@ -253,6 +258,7 @@ final class ViewController: NSViewController {
     override func loadView() {
         let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
         let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 30))
+        editor.allowsUndo = true
         self.editor = editor
         self.output = output
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)

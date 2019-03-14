@@ -65,6 +65,9 @@ extension NSApplication {
         
         let editMenu = NSMenuItem()
         editMenu.submenu = NSMenu(title: "Edit")
+        editMenu.submenu?.addItem(NSMenuItem(title: "Undo", action: #selector(MarkdownDocument.undo), keyEquivalent: "z"))
+        editMenu.submenu?.addItem(NSMenuItem(title: "Undo", action: #selector(MarkdownDocument.redo), keyEquivalent: "Z"))
+        editMenu.submenu?.addItem(NSMenuItem.separator())
         editMenu.submenu?.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
         editMenu.submenu?.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
         editMenu.submenu?.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
