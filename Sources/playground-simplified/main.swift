@@ -57,7 +57,7 @@ class HighlightController {
     
     func execute() {
         guard let r = editor.selectedRanges.first?.rangeValue else { return }
-        guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return }
+        guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
         repl.evaluate(found.text)
     }
     
@@ -88,59 +88,55 @@ final class MyDocumentController: NSDocumentController {
     override func documentClass(forType typeName: String) -> AnyClass? {
         return MarkdownDocument.self
     }
-    
-    override func openDocument(_ sender: Any?) {
-        let openPanel = NSOpenPanel()
-        beginOpenPanel(openPanel, forTypes: ["public.text"], completionHandler: { x in
-            switch x {
-            case NSApplication.ModalResponse.OK.rawValue:
-                for url in openPanel.urls {
-                    self.openDocument(withContentsOf: url, display: true, completionHandler: { (doc, bool, err) in })
-                }
-            default:
-                ()
-            }
-
-        })
-    }
 }
 
 struct MarkdownError: Error { }
 
+@objc(MarkdownDocument)
 final class MarkdownDocument: NSDocument {
-    var contentViewController: ViewController?
-    var text: String?
+    static var cascadePoint = NSPoint.zero
+    
+    let contentViewController = ViewController()
+    var text = ""
     
     override init() {
         super.init()
     }
     
+    override class var readableTypes: [String] {
+        return ["public.text"]
+    }
+    
+    override func defaultDraftName() -> String {
+        return "My Playground"
+    }
+    
     override func read(from data: Data, ofType typeName: String) throws {
         text = String(data: data, encoding: .utf8)!
-        contentViewController?.text = text ?? ""
+        contentViewController.text = text
     }
     
     override func data(ofType typeName: String) throws -> Data {
-        guard let text = contentViewController?.editor.attributedString().string else {
-            throw MarkdownError()
-        }
-        contentViewController?.editor.breakUndoCoalescing()
+        let text = contentViewController.editor.attributedString().string
+        contentViewController.editor.breakUndoCoalescing()
         return text.data(using: .utf8)!
     }
     
     override func makeWindowControllers() {
-        let vc = ViewController()
-        contentViewController = vc
-        vc.text = self.text ?? ""
-        let window = NSWindow(contentViewController: vc)
+        contentViewController.text = text
+        let window = NSWindow(contentViewController: contentViewController)
+        window.styleMask = window.styleMask.union(.fullSizeContentView)
+        window.titlebarAppearsTransparent = true
         window.setContentSize(NSSize(width: 800, height: 600))
         window.minSize = NSSize(width: 400, height: 200)
+
         let wc = NSWindowController(window: window)
-        wc.contentViewController = vc
+        wc.contentViewController = contentViewController
         addWindowController(wc)
+
+        window.setFrameTopLeftPoint(NSPoint(x: 5, y: (NSScreen.main?.visibleFrame.maxY ?? 0) - 5))
+        MarkdownDocument.cascadePoint = window.cascadeTopLeft(from: MarkdownDocument.cascadePoint)
         window.makeKeyAndOrderFront(nil)
-        // TODO we should cascade new window positions
-        window.center()
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
     }
     
@@ -153,8 +149,6 @@ final class MarkdownDocument: NSDocument {
     }
     
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        // todo: this must be a mistake, but for some reason this returns false (except for an initial empty document)
-        // todo: maybe this is the wrong selector?
         if menuItem.action == #selector(NSDocument.save(_:)) && isDocumentEdited {
             return true
         }
@@ -190,7 +184,6 @@ final class ViewController: NSViewController {
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
-        self.text = text + "" // trigger didSet
         
         splitView.isVertical = true
         splitView.dividerStyle = .thin
