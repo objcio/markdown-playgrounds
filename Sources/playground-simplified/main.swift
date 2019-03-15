@@ -63,6 +63,7 @@ class HighlightController {
     
     func executeAll() {
         for b in codeBlocks {
+            if b.fenceInfo == "swift-error" || b.fenceInfo == "swift-example" { continue }
             repl.evaluate(b.text)
         }
     }
