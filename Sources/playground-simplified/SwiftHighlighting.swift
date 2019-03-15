@@ -8,6 +8,36 @@
 import Foundation
 import SwiftSyntax
 import Foundation
+import AppKit
+
+extension Token.Kind {
+    var color: NSColor {
+        switch self {
+        case .comment: return accentColors[0]
+        case .keyword: return accentColors[4]
+        case .number: return accentColors[3]
+        case .string: return accentColors[2]
+        }
+    }
+}
+
+extension NSMutableAttributedString {
+    func highlight(block: CodeBlock, result: SwiftHighlighter.Result) {
+        let nsString = string as NSString
+        let offset1 = (nsString.substring(with: block.range) as NSString).range(of: block.text).location
+        if offset1 == NSNotFound { return } // error
+        let start = block.range.location + offset1
+        for el in result {
+            let offset = NSRange(el.range, in: block.text)
+            let theRange = NSRange(location: start + offset.location, length: offset.length)
+            guard theRange.location >= 0, theRange.length < nsString.length else {
+                print("invalid range: \(theRange)")
+                continue
+            }
+            addAttribute(.foregroundColor, value: el.kind.color, range: theRange)
+        }
+    }
+}
 
 class SwiftHighlighter {
     typealias Result = [(range: Range<String.Index>, kind: Token.Kind)]

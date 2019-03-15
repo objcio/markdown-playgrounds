@@ -4,16 +4,6 @@ import AppKit
 let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!, .foregroundColor: NSColor.textColor]
 let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([.foregroundColor: NSColor.red], uniquingKeysWith: { $1 })
 
-extension Token.Kind {
-    var color: NSColor {
-        switch self {
-        case .comment: return accentColors[0]
-        case .keyword: return accentColors[4]
-        case .number: return accentColors[3]
-        case .string: return accentColors[2]
-        }
-    }
-}
 
 // From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
 class HighlightController {
@@ -51,31 +41,18 @@ class HighlightController {
     func highlight() {
         guard let att = editor.textStorage else { return }
         att.beginEditing()
-        codeBlocks = att.highlight() // ideally, we'd pass in the cached values here (using some kind of protocol?) so that we can highlight them straight away.
+        codeBlocks = att.highlight(swiftHighlighter)
         att.endEditing()
         guard !codeBlocks.isEmpty else { return }
-            do {
-                let blocks = self.codeBlocks
-                // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
-                let zipped = zip(blocks, try self.swiftHighlighter.highlight(blocks.map { $0.text }))
-                    att.beginEditing()
-                    let nsString = (att.string as NSString)
-                    for (block, result) in zipped {
-                        let offset1 = (nsString.substring(with: block.range) as NSString).range(of: block.text).location
-                        if offset1 == NSNotFound { continue } // error
-                        let start = block.range.location + offset1
-                        for el in result {
-                            let offset = NSRange(el.range, in: block.text)
-                            let theRange = NSRange(location: start + offset.location, length: offset.length)
-                            guard theRange.location >= 0, theRange.length < nsString.length else {
-                                print("invalid range: \(theRange)")
-                                continue
-                            }
-                            self.editor.textStorage?.addAttribute(.foregroundColor, value: el.kind.color, range: theRange)
-                        }
-                    }
-                    att.endEditing()
-            } catch { print(error) }
+        do {
+            // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
+            let zipped = zip(codeBlocks, try self.swiftHighlighter.highlight(codeBlocks.map { $0.text }))
+            att.beginEditing()
+            for (block, result) in zipped {
+                att.highlight(block: block, result: result)
+            }
+            att.endEditing()
+        } catch { print(error) }
     }
     
     func execute() {
