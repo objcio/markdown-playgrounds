@@ -97,7 +97,10 @@ final class MarkdownDocument: NSDocument {
     static var cascadePoint = NSPoint.zero
     
     let contentViewController = ViewController()
-    var text = ""
+    var text: String {
+        get { return contentViewController.text }
+        set { contentViewController.text = newValue }
+    }
     
     override init() {
         super.init()
@@ -112,8 +115,10 @@ final class MarkdownDocument: NSDocument {
     }
     
     override func read(from data: Data, ofType typeName: String) throws {
-        text = String(data: data, encoding: .utf8)!
-        contentViewController.text = text
+        guard let string = String(data: data, encoding: .utf8) else {
+            throw MarkdownError()
+        }
+        text = string
     }
     
     override func data(ofType typeName: String) throws -> Data {
@@ -123,7 +128,6 @@ final class MarkdownDocument: NSDocument {
     }
     
     override func makeWindowControllers() {
-        contentViewController.text = text
         let window = NSWindow(contentViewController: contentViewController)
         window.styleMask = window.styleMask.union(.fullSizeContentView)
         window.titlebarAppearsTransparent = true
@@ -163,24 +167,25 @@ final class MarkdownDocument: NSDocument {
 }
 
 final class ViewController: NSViewController {
-    private var highlighter: HighlightController!
     private var splitView = NSSplitView()
-    private(set) var editor: NSTextView!
-    private(set) var output: NSTextView!
+    private(set) var editor = NSTextView()
+    private(set) var output = NSTextView()
+    private lazy var highlighter = HighlightController(editor: editor, output: output)
     
-    var text: String = "" {
-        didSet {
-            editor?.textStorage?.setAttributedString(NSAttributedString(string: text))
-            highlighter?.highlight()
+    var text: String {
+        get {
+            return editor.string
+        }
+        set {
+            editor.string = newValue
+            highlighter.highlight()
         }
     }
-
+    
     override func loadView() {
-        let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
-        let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 30))
+        let editorScrollView = editor.configureAndWrapInScrollView(isEditable: true, inset: CGSize(width: 30, height: 30))
+        let outputScrollView = output.configureAndWrapInScrollView(isEditable: false, inset: CGSize(width: 10, height: 30))
         editor.allowsUndo = true
-        self.editor = editor
-        self.output = output
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
@@ -192,28 +197,26 @@ final class ViewController: NSViewController {
         splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
         splitView.autoresizingMask = [.width, .height]
         splitView.autosaveName = "SplitView"
-        self.view = splitView
-    }
-    
-    override func viewDidLoad() {
-        highlighter = HighlightController(editor: editor, output: output)
+        
         highlighter.highlight()
+
+        self.view = splitView
     }
     
     override func viewDidAppear() {
         view.window!.makeFirstResponder(editor)
     }
-    
+
     @objc func execute() {
-        highlighter!.execute()
+        highlighter.execute()
     }
     
     @objc func executeAll() {
-        highlighter!.executeAll()
+        highlighter.executeAll()
     }
     
     @objc func reset() {
-        output.textStorage?.setAttributedString(NSAttributedString(string: ""))
+        output.string = ""
         highlighter.reset()
     }
 }

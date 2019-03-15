@@ -17,17 +17,19 @@ func application(delegate: AppDelegate) -> NSApplication {
     return app
 }
 
-func textView(isEditable: Bool, inset: CGSize) -> (NSScrollView, NSTextView) {
-    let scrollView = NSScrollView()
-    scrollView.hasVerticalScroller = true
-    let textView = NSTextView()
-    textView.isEditable = isEditable
-    textView.textContainerInset = inset
-    textView.autoresizingMask = [.width]
-    textView.isAutomaticQuoteSubstitutionEnabled = false
-    textView.isAutomaticDashSubstitutionEnabled = false
-    scrollView.documentView = textView
-    return (scrollView, textView)
+extension NSTextView {
+    func configureAndWrapInScrollView(isEditable editable: Bool, inset: CGSize) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        
+        isEditable = editable
+        textContainerInset = inset
+        autoresizingMask = [.width]
+        isAutomaticQuoteSubstitutionEnabled = false
+        isAutomaticDashSubstitutionEnabled = false
+        scrollView.documentView = self
+        return scrollView
+    }
 }
 
 extension NSImage {
