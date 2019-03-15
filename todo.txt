@@ -1,0 +1,6 @@
+- [ ] "Halt on Error" checkmark menu item that halts when an error happens
+- [ ] Have a way to go back to the source code from an error in the console (could be a link)
+- [ ] Have a way to mark certain swift blocks as non-executable
+- [ ] Have multiple "sessions"
+- [ ] Search (and replace)
+- [ ] Reload the file when it has changed on disk (override NSDocument's presentedItemDidChange)
