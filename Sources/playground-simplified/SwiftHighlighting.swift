@@ -45,6 +45,7 @@ class SwiftHighlighter {
     var cache: [String:Result] = [:]
     
     func highlight(_ pieces: [String]) throws -> [Result] {
+        // todo we probably only need to return (Block,Result) for the non-cached pieces!
         var combined: String = ""
         
         let ranges: [Range<String.Index>?] = pieces.map { piece in
