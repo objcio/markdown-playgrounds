@@ -115,6 +115,10 @@ final class MarkdownDocument: NSDocument {
         super.init()
     }
     
+    override class func isNativeType(_ type: String) -> Bool {
+        return true
+    }
+    
     override func read(from data: Data, ofType typeName: String) throws {
         text = String(data: data, encoding: .utf8)!
         contentViewController?.text = text ?? ""
@@ -142,29 +146,6 @@ final class MarkdownDocument: NSDocument {
         // TODO we should cascade new window positions
         window.center()
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
-    }
-    
-    @objc func undo() {
-        undoManager?.undo()
-    }
-    
-    @objc func redo() {
-        undoManager?.redo()
-    }
-    
-    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        // todo: this must be a mistake, but for some reason this returns false (except for an initial empty document)
-        // todo: maybe this is the wrong selector?
-        if menuItem.action == #selector(NSDocument.save(_:)) && isDocumentEdited {
-            return true
-        }
-        if menuItem.action == #selector(MarkdownDocument.undo) {
-            return undoManager?.canUndo == true
-        }
-        if menuItem.action == #selector(MarkdownDocument.redo) {
-            return undoManager?.canRedo == true
-        }
-        return super.validateMenuItem(menuItem)
     }
 }
 
