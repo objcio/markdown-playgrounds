@@ -41,24 +41,22 @@ struct REPLParser {
     }
 }
 
-class REPL {
+class REPL<Metadata> {
     private var process: Process!
     private let stdIn = Pipe()
-    private let onStdOut: (String) -> ()
-    private let onStdErr: (String) -> ()
     private var token: Any?
     private let marker = UUID().uuidString
     private var stdOutParser: REPLParser!
     private var stdErrBuffer = ""
     private var started = false
+    private var queue: [Metadata] = []
     
-    init(onStdOut: @escaping (String) -> (), onStdErr: @escaping (String) -> ()) {
-        self.onStdOut = onStdOut
-        self.onStdErr = onStdErr
+    init(onStdOut: @escaping (String, Metadata) -> (), onStdErr: @escaping (String, Metadata) -> ()) {
         self.stdOutParser = REPLParser { [unowned self] output in
-            self.onStdOut(output)
+            let metadata = self.queue.remove(at: 0)
+            onStdOut(output, metadata)
             let err = self.stdErrBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !err.isEmpty { self.onStdErr(err) }
+            if !err.isEmpty { onStdErr(err, metadata) }
             self.stdErrBuffer = ""
         }
         
@@ -95,7 +93,8 @@ class REPL {
         process.terminate()
     }
     
-    func evaluate(_ s: String) {
+    func evaluate(_ s: String, metadata d: Metadata) {
+        queue.append(d)
         started = true
         let statements = """
         print("\(self.stdOutParser.startMarker)")

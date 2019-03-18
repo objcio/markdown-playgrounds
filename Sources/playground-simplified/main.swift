@@ -86,7 +86,7 @@ final class ViewController: NSViewController {
     private var observationToken: Any?
     
     private var codeBlocks: [CodeBlock] = []
-    private var repl: REPL!
+    private var repl: REPL<CodeBlock>!
     private let swiftHighlighter = SwiftHighlighter()
 
     
@@ -103,6 +103,8 @@ final class ViewController: NSViewController {
     override func loadView() {
         let editorScrollView = editor.configureAndWrapInScrollView(isEditable: true, inset: CGSize(width: 30, height: 30))
         let outputScrollView = output.configureAndWrapInScrollView(isEditable: false, inset: CGSize(width: 10, height: 30))
+        output.delegate = self
+        output.linkTextAttributes = [NSAttributedString.Key.cursor: NSCursor.pointingHand]
         editor.allowsUndo = true
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
@@ -136,12 +138,14 @@ final class ViewController: NSViewController {
     }
 
     private func setupREPL() {
-        repl = REPL(onStdOut: {
-            let text = $0.isEmpty ? "No output" : $0
+        repl = REPL(onStdOut: { out, codeblock in
+            let text = out.isEmpty ? "No output" : out
             self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
             self.output.scrollToEndOfDocument(nil)
-        }, onStdErr: {
-            self.output.textStorage?.append(NSAttributedString(string: $0 + "\n", attributes: stdErrAttributes))
+        }, onStdErr: { out, codeblock in
+            var atts = stdErrAttributes
+            atts[.link] = codeblock.range
+            self.output.textStorage?.append(NSAttributedString(string: out + "\n", attributes: atts))
             self.output.scrollToEndOfDocument(nil)
         })
     }
@@ -162,18 +166,28 @@ final class ViewController: NSViewController {
     @objc func execute() {
         guard let r = editor.selectedRanges.first?.rangeValue else { return }
         guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
-        repl.evaluate(found.text)
+        repl.evaluate(found.text, metadata: found)
     }
     
     @objc func executeAll() {
         for b in codeBlocks {
             if b.fenceInfo == "swift-error" || b.fenceInfo == "swift-example" { continue }
-            repl.evaluate(b.text)
+            repl.evaluate(b.text, metadata: b)
         }
     }
     
     @objc func reset() {
         setupREPL()
+    }
+}
+
+extension ViewController: NSTextViewDelegate {
+    func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+        guard let u = link as? NSRange else { return false }
+        editor.scrollRangeToVisible(u)
+        editor.selectedRanges = [NSValue(range: u)]
+        editor.window?.makeFirstResponder(editor)
+        return true
     }
 }
 
