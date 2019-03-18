@@ -126,7 +126,6 @@ class SwiftHighlighterRewriter: SyntaxRewriter {
             kind = nil
             //print("Unknown token: \(token.tokenKind) \(token)")
         }
-        token.trailingTrivia
         if let k = kind {
         	result.append(Token(kind: k, start: token.positionAfterSkippingLeadingTrivia, end: token.endPosition))
         }

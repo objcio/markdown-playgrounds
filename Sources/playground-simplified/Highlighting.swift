@@ -136,7 +136,7 @@ extension NSMutableAttributedString {
                 attributes.textColor = .linkColor
                 addAttribute(.foregroundColor, value: attributes.textColor, range: nsRange)
                 if let s = el.urlString, let u = URL(string: s) {
-			addAttribute(.link, value: u, range: nsRange)
+                    addAttribute(.link, value: u, range: nsRange)
                 }
             case CMARK_NODE_CODE:
                 attributes.family = "Monaco"
@@ -150,16 +150,15 @@ extension NSMutableAttributedString {
                 attributes.setIndent(fontSize)
                 addAttribute(.paragraphStyle, value: attributes.paragraphStyle, range: nsRange)
             case CMARK_NODE_CODE_BLOCK:
-                addAttribute(.backgroundColor, value: NSColor.underPageBackgroundColor, range: nsRange)
+                addAttribute(.backgroundColor, value: NSColor.windowBackgroundColor, range: nsRange)
                 addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize)!, range: nsRange)
                 let block = CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!)
                 if let res = swiftHighlighter.cache[el.literal!] {
                     highlight(block: block, result: res)
-                } else {
-                	result.append(block)
                 }
+                result.append(block)
             default:
-                ()
+                break
             }
         }
         return result

@@ -13,20 +13,54 @@ func application(delegate: AppDelegate) -> NSApplication {
     NSApp.setActivationPolicy(.regular)
     app.mainMenu = app.customMenu
     app.delegate = delegate
+    app.applicationIconImage = NSImage.appIcon
     return app
 }
 
-func textView(isEditable: Bool, inset: CGSize) -> (NSScrollView, NSTextView) {
-    let scrollView = NSScrollView()
-    scrollView.hasVerticalScroller = true
-    let textView = NSTextView()
-    textView.isEditable = isEditable
-    textView.textContainerInset = inset
-    textView.autoresizingMask = [.width]
-    textView.isAutomaticQuoteSubstitutionEnabled = false
-    textView.isAutomaticDashSubstitutionEnabled = false
-    scrollView.documentView = textView
-    return (scrollView, textView)
+extension NSTextView {
+    func configureAndWrapInScrollView(isEditable editable: Bool, inset: CGSize) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        
+        isEditable = editable
+        textContainerInset = inset
+        autoresizingMask = [.width]
+        isAutomaticQuoteSubstitutionEnabled = false
+        isAutomaticDashSubstitutionEnabled = false
+        scrollView.documentView = self
+        return scrollView
+    }
+}
+
+extension NSImage {
+	public static func drawn(width: CGFloat, height: CGFloat, flipped: Bool = false, _ function: @escaping (CGContext, CGRect) -> Void) -> NSImage {
+		return NSImage(size: CGSize(width: width, height: height), flipped: flipped) { rect -> Bool in
+			guard let context = NSGraphicsContext.current else { return false }
+			function(context.cgContext, rect)
+			return true
+		}
+	}
+	
+	public static var appIcon: NSImage {
+		return NSImage.drawn(width: 128, height: 128) { context, bounds in
+			context.rotate(by: 0.14)
+			let box = bounds.insetBy(dx: 16, dy: 16).offsetBy(dx: 16, dy: -16)
+            context.setFillColor(NSColor(white: 0.1, alpha: 1).cgColor)
+            context.setStrokeColor(NSColor(white: 0.9, alpha: 0.75).cgColor)
+            context.fill(box)
+            context.stroke(box)
+			let attributes: [NSAttributedString.Key: Any] =
+                [.foregroundColor: NSColor.orange.cgColor, .font: NSFont(name: "Menlo", size: 14)!]
+			let string = "```\nlet x = 5\nprint(x)\n```"
+			let text = NSAttributedString(string: string, attributes: attributes)
+			let framesetter = CTFramesetterCreateWithAttributedString(text)
+            let textRange = CFRangeMake(0, text.length)
+            let textContainerPath =  CGPath(rect: box.insetBy(dx: 8, dy: 8), transform: nil)
+			let frame = CTFramesetterCreateFrame(framesetter, textRange, textContainerPath, nil)
+			context.textPosition = CGPoint(x: 8, y: 24)
+			CTFrameDraw(frame, context)
+		}
+	}
 }
 
 extension NSApplication {

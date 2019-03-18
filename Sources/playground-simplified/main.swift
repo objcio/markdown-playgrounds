@@ -57,7 +57,7 @@ class HighlightController {
     
     func execute() {
         guard let r = editor.selectedRanges.first?.rangeValue else { return }
-        guard let found = codeBlocks.first(where: { $0.range.contains(r.location) }) else { return }
+        guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
         repl.evaluate(found.text)
     }
     
@@ -88,90 +88,90 @@ final class MyDocumentController: NSDocumentController {
     override func documentClass(forType typeName: String) -> AnyClass? {
         return MarkdownDocument.self
     }
-    
-    override func openDocument(_ sender: Any?) {
-        let openPanel = NSOpenPanel()
-        beginOpenPanel(openPanel, forTypes: ["public.text"], completionHandler: { x in
-            switch x {
-            case NSApplication.ModalResponse.OK.rawValue:
-                for url in openPanel.urls {
-                    self.openDocument(withContentsOf: url, display: true, completionHandler: { (doc, bool, err) in })
-                }
-            default:
-                ()
-            }
-
-        })
-    }
 }
 
 struct MarkdownError: Error { }
 
+@objc(MarkdownDocument)
 final class MarkdownDocument: NSDocument {
-    var contentViewController: ViewController?
-    var text: String?
+    static var cascadePoint = NSPoint.zero
+    
+    let contentViewController = ViewController()
+    var text: String {
+        get { return contentViewController.text }
+        set { contentViewController.text = newValue }
+    }
     
     override init() {
         super.init()
+    }
+    
+    override class var readableTypes: [String] {
+        return ["public.text"]
     }
     
     override class func isNativeType(_ type: String) -> Bool {
         return true
     }
     
+    override func defaultDraftName() -> String {
+        return "My Playground"
+    }
+    
     override func read(from data: Data, ofType typeName: String) throws {
-        text = String(data: data, encoding: .utf8)!
-        contentViewController?.text = text ?? ""
+        guard let string = String(data: data, encoding: .utf8) else {
+            throw MarkdownError()
+        }
+        text = string
     }
     
     override func data(ofType typeName: String) throws -> Data {
-        guard let text = contentViewController?.editor.attributedString().string else {
-            throw MarkdownError()
-        }
-        contentViewController?.editor.breakUndoCoalescing()
+        let text = contentViewController.editor.attributedString().string
+        contentViewController.editor.breakUndoCoalescing()
         return text.data(using: .utf8)!
     }
     
     override func makeWindowControllers() {
-        let vc = ViewController()
-        contentViewController = vc
-        vc.text = self.text ?? ""
-        let window = NSWindow(contentViewController: vc)
+        let window = NSWindow(contentViewController: contentViewController)
+        window.styleMask.formUnion(.fullSizeContentView)
+        window.titlebarAppearsTransparent = true
         window.setContentSize(NSSize(width: 800, height: 600))
         window.minSize = NSSize(width: 400, height: 200)
+
         let wc = NSWindowController(window: window)
-        wc.contentViewController = vc
+        wc.contentViewController = contentViewController
         addWindowController(wc)
+
+        window.setFrameTopLeftPoint(NSPoint(x: 5, y: (NSScreen.main?.visibleFrame.maxY ?? 0) - 5))
+        MarkdownDocument.cascadePoint = window.cascadeTopLeft(from: MarkdownDocument.cascadePoint)
         window.makeKeyAndOrderFront(nil)
-        // TODO we should cascade new window positions
-        window.center()
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
     }
 }
 
 final class ViewController: NSViewController {
-    private var highlighter: HighlightController!
     private var splitView = NSSplitView()
-    private(set) var editor: NSTextView!
-    private(set) var output: NSTextView!
+    private(set) var editor = NSTextView()
+    private(set) var output = NSTextView()
+    private lazy var highlighter = HighlightController(editor: editor, output: output)
     
-    var text: String = "" {
-        didSet {
-            editor?.textStorage?.setAttributedString(NSAttributedString(string: text))
-            highlighter?.highlight()
+    var text: String {
+        get {
+            return editor.string
+        }
+        set {
+            editor.string = newValue
+            highlighter.highlight()
         }
     }
-
+    
     override func loadView() {
-        let (editorScrollView, editor) = textView(isEditable: true, inset: CGSize(width: 30, height: 30))
-        let (outputScrollView, output) = textView(isEditable: false, inset: CGSize(width: 10, height: 30))
+        let editorScrollView = editor.configureAndWrapInScrollView(isEditable: true, inset: CGSize(width: 30, height: 30))
+        let outputScrollView = output.configureAndWrapInScrollView(isEditable: false, inset: CGSize(width: 10, height: 30))
         editor.allowsUndo = true
-        self.editor = editor
-        self.output = output
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
-        self.text = text + "" // trigger didSet
         
         splitView.isVertical = true
         splitView.dividerStyle = .thin
@@ -180,28 +180,26 @@ final class ViewController: NSViewController {
         splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
         splitView.autoresizingMask = [.width, .height]
         splitView.autosaveName = "SplitView"
-        self.view = splitView
-    }
-    
-    override func viewDidLoad() {
-        highlighter = HighlightController(editor: editor, output: output)
+        
         highlighter.highlight()
+
+        self.view = splitView
     }
     
     override func viewDidAppear() {
         view.window!.makeFirstResponder(editor)
     }
-    
+
     @objc func execute() {
-        highlighter!.execute()
+        highlighter.execute()
     }
     
     @objc func executeAll() {
-        highlighter!.executeAll()
+        highlighter.executeAll()
     }
     
     @objc func reset() {
-        output.textStorage?.setAttributedString(NSAttributedString(string: ""))
+        output.string = ""
         highlighter.reset()
     }
 }
