@@ -4,63 +4,6 @@ import AppKit
 let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!, .foregroundColor: NSColor.textColor]
 let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([.foregroundColor: NSColor.red], uniquingKeysWith: { $1 })
 
-
-// From: https://christiantietze.de/posts/2017/11/syntax-highlight-nstextstorage-insertion-point-change/
-class HighlightController {
-    private let editor: NSTextView
-    private let output: NSTextView
-    private var codeBlocks: [CodeBlock] = []
-    private var repl: REPL!
-    private let swiftHighlighter = SwiftHighlighter()
-    
-    init(editor: NSTextView, output: NSTextView) {
-        self.editor = editor
-        self.output = output
-        setupREPL()
-    }
-    
-    private func setupREPL() {
-        repl = REPL(onStdOut: {
-            let text = $0.isEmpty ? "No output" : $0
-            self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
-            self.output.scrollToEndOfDocument(nil)
-        }, onStdErr: {
-            self.output.textStorage?.append(NSAttributedString(string: $0 + "\n", attributes: stdErrAttributes))
-            self.output.scrollToEndOfDocument(nil)
-        })
-    }
-    
-    func highlight() {
-        guard let att = editor.textStorage else { return }
-        codeBlocks = att.highlightMarkdown(swiftHighlighter)
-        guard !codeBlocks.isEmpty else { return }
-        do {
-            // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
-            let zipped = zip(codeBlocks, try self.swiftHighlighter.highlight(codeBlocks.map { $0.text }))
-            for (block, result) in zipped {
-                att.highlightCodeBlock(block: block, result: result)
-            }
-        } catch { print(error) }
-    }
-    
-    func execute() {
-        guard let r = editor.selectedRanges.first?.rangeValue else { return }
-        guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
-        repl.evaluate(found.text)
-    }
-    
-    func executeAll() {
-        for b in codeBlocks {
-            if b.fenceInfo == "swift-error" || b.fenceInfo == "swift-example" { continue }
-            repl.evaluate(b.text)
-        }
-    }
-    
-    func reset() {
-        setupREPL()
-    }
-}
-
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         _ = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
@@ -140,8 +83,12 @@ final class ViewController: NSViewController {
     private var splitView = NSSplitView()
     let editor = NSTextView()
     let output = NSTextView()
-    private lazy var highlighter = HighlightController(editor: editor, output: output)
     private var observationToken: Any?
+    
+    private var codeBlocks: [CodeBlock] = []
+    private var repl: REPL!
+    private let swiftHighlighter = SwiftHighlighter()
+
     
     var text: String {
         get {
@@ -149,7 +96,7 @@ final class ViewController: NSViewController {
         }
         set {
             editor.string = newValue
-            highlighter.highlight()
+            highlight()
         }
     }
     
@@ -174,9 +121,10 @@ final class ViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: editor, queue: nil) { [unowned highlighter] note in
-            highlighter.highlight()
+        observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: editor, queue: nil) { [unowned self] note in
+            self.highlight()
         }
+        setupREPL()
     }
     
     deinit {
@@ -187,17 +135,45 @@ final class ViewController: NSViewController {
         view.window!.makeFirstResponder(editor)
     }
 
+    private func setupREPL() {
+        repl = REPL(onStdOut: {
+            let text = $0.isEmpty ? "No output" : $0
+            self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
+            self.output.scrollToEndOfDocument(nil)
+        }, onStdErr: {
+            self.output.textStorage?.append(NSAttributedString(string: $0 + "\n", attributes: stdErrAttributes))
+            self.output.scrollToEndOfDocument(nil)
+        })
+    }
+    
+    func highlight() {
+        guard let att = editor.textStorage else { return }
+        codeBlocks = att.highlightMarkdown(swiftHighlighter)
+        guard !codeBlocks.isEmpty else { return }
+        do {
+            // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
+            let zipped = zip(codeBlocks, try self.swiftHighlighter.highlight(codeBlocks.map { $0.text }))
+            for (block, result) in zipped {
+                att.highlightCodeBlock(block: block, result: result)
+            }
+        } catch { print(error) }
+    }
+    
     @objc func execute() {
-        highlighter.execute()
+        guard let r = editor.selectedRanges.first?.rangeValue else { return }
+        guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
+        repl.evaluate(found.text)
     }
     
     @objc func executeAll() {
-        highlighter.executeAll()
+        for b in codeBlocks {
+            if b.fenceInfo == "swift-error" || b.fenceInfo == "swift-example" { continue }
+            repl.evaluate(b.text)
+        }
     }
     
     @objc func reset() {
-        output.string = ""
-        highlighter.reset()
+        setupREPL()
     }
 }
 
