@@ -107,7 +107,7 @@ extension CommonMark.Node {
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
-    func highlight(_ swiftHighlighter: SwiftHighlighter) -> [CodeBlock] {
+    func highlightMarkdown(_ swiftHighlighter: SwiftHighlighter) -> [CodeBlock] {
         setAttributes(defaultAttributes.atts, range: range)
         guard let parsed = Node(markdown: string) else { return [] }
         let scalars = string.unicodeScalars
@@ -154,7 +154,7 @@ extension NSMutableAttributedString {
                 addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize)!, range: nsRange)
                 let block = CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!)
                 if let res = swiftHighlighter.cache[el.literal!] {
-                    highlight(block: block, result: res)
+                    highlightCodeBlock(block: block, result: res)
                 }
                 result.append(block)
             default:

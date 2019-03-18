@@ -22,7 +22,7 @@ extension Token.Kind {
 }
 
 extension NSMutableAttributedString {
-    func highlight(block: CodeBlock, result: SwiftHighlighter.Result) {
+    func highlightCodeBlock(block: CodeBlock, result: SwiftHighlighter.Result) {
         let nsString = string as NSString
         let offset1 = (nsString.substring(with: block.range) as NSString).range(of: block.text).location
         if offset1 == NSNotFound { return } // error
@@ -57,12 +57,19 @@ class SwiftHighlighter {
             return start..<end
         }
         
-        let allResults = try _highlight(combined)
+        // combined contains all the code that still needs to be highlighted
+        // ranges contains the ranges of the to-be-highlighted pieces (in combined), and nil for each piece that's in the cache.
+        
+        let allResults = combined.isEmpty ? [] : try _highlight(combined)
         var separated: [Result] = zip(ranges, ranges.indices).map { (range, index) in
             if range == nil { return cache[pieces[index]]! } else { return [] }
         }
+        // at this point, separated contains a non-nil entry for each cached piece.
+    
+        
+        
         for var el in allResults {
-            let currentIndex = ranges.index { $0?.contains(el.range.lowerBound) == true }!
+            let currentIndex = ranges.firstIndex { $0?.contains(el.range.lowerBound) == true }!
             let distance = combined.distance(from: ranges[currentIndex]!.lowerBound, to: el.range.lowerBound)
             let piece = pieces[currentIndex]
             let start = piece.index(piece.startIndex, offsetBy: distance)
@@ -76,7 +83,6 @@ class SwiftHighlighter {
         }
         return separated
     }
-    
     
     private func _highlight(_ code: String) throws -> Result {
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)

@@ -9,7 +9,6 @@ let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([
 class HighlightController {
     private let editor: NSTextView
     private let output: NSTextView
-    private var observationToken: Any?
     private var codeBlocks: [CodeBlock] = []
     private var repl: REPL!
     private let swiftHighlighter = SwiftHighlighter()
@@ -18,13 +17,6 @@ class HighlightController {
         self.editor = editor
         self.output = output
         setupREPL()
-        observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: editor, queue: nil) { [unowned self] note in
-            self.highlight()
-        }
-    }
-    
-    deinit {
-        if let t = observationToken { NotificationCenter.default.removeObserver(t) }
     }
     
     private func setupREPL() {
@@ -40,18 +32,14 @@ class HighlightController {
     
     func highlight() {
         guard let att = editor.textStorage else { return }
-        att.beginEditing()
-        codeBlocks = att.highlight(swiftHighlighter)
-        att.endEditing()
+        codeBlocks = att.highlightMarkdown(swiftHighlighter)
         guard !codeBlocks.isEmpty else { return }
         do {
             // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
             let zipped = zip(codeBlocks, try self.swiftHighlighter.highlight(codeBlocks.map { $0.text }))
-            att.beginEditing()
             for (block, result) in zipped {
-                att.highlight(block: block, result: result)
+                att.highlightCodeBlock(block: block, result: result)
             }
-            att.endEditing()
         } catch { print(error) }
     }
     
@@ -134,7 +122,6 @@ final class MarkdownDocument: NSDocument {
     override func makeWindowControllers() {
         let window = NSWindow(contentViewController: contentViewController)
         window.styleMask.formUnion(.fullSizeContentView)
-        window.titlebarAppearsTransparent = true
         window.setContentSize(NSSize(width: 800, height: 600))
         window.minSize = NSSize(width: 400, height: 200)
 
@@ -151,9 +138,10 @@ final class MarkdownDocument: NSDocument {
 
 final class ViewController: NSViewController {
     private var splitView = NSSplitView()
-    private(set) var editor = NSTextView()
-    private(set) var output = NSTextView()
+    let editor = NSTextView()
+    let output = NSTextView()
     private lazy var highlighter = HighlightController(editor: editor, output: output)
+    private var observationToken: Any?
     
     var text: String {
         get {
@@ -181,9 +169,18 @@ final class ViewController: NSViewController {
         splitView.autoresizingMask = [.width, .height]
         splitView.autosaveName = "SplitView"
         
-        highlighter.highlight()
-
         self.view = splitView
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: editor, queue: nil) { [unowned highlighter] note in
+            highlighter.highlight()
+        }
+    }
+    
+    deinit {
+        if let t = observationToken { NotificationCenter.default.removeObserver(t) }
     }
     
     override func viewDidAppear() {
