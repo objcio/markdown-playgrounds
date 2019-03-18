@@ -140,7 +140,9 @@ final class ViewController: NSViewController {
     private func setupREPL() {
         repl = REPL(onStdOut: { out, codeblock in
             let text = out.isEmpty ? "No output" : out
-            self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: stdOutAttributes))
+            var atts = stdOutAttributes
+            atts[.link] = codeblock.range
+            self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: atts))
             self.output.scrollToEndOfDocument(nil)
         }, onStdErr: { out, codeblock in
             var atts = stdErrAttributes
