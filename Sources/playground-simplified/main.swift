@@ -110,6 +110,10 @@ final class MarkdownDocument: NSDocument {
         return ["public.text"]
     }
     
+    override class func isNativeType(_ type: String) -> Bool {
+        return true
+    }
+    
     override func defaultDraftName() -> String {
         return "My Playground"
     }
@@ -129,7 +133,7 @@ final class MarkdownDocument: NSDocument {
     
     override func makeWindowControllers() {
         let window = NSWindow(contentViewController: contentViewController)
-        window.styleMask = window.styleMask.union(.fullSizeContentView)
+        window.styleMask.formUnion(.fullSizeContentView)
         window.titlebarAppearsTransparent = true
         window.setContentSize(NSSize(width: 800, height: 600))
         window.minSize = NSSize(width: 400, height: 200)
@@ -142,27 +146,6 @@ final class MarkdownDocument: NSDocument {
         MarkdownDocument.cascadePoint = window.cascadeTopLeft(from: MarkdownDocument.cascadePoint)
         window.makeKeyAndOrderFront(nil)
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
-    }
-    
-    @objc func undo() {
-        undoManager?.undo()
-    }
-    
-    @objc func redo() {
-        undoManager?.redo()
-    }
-    
-    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
-        if menuItem.action == #selector(NSDocument.save(_:)) && isDocumentEdited {
-            return true
-        }
-        if menuItem.action == #selector(MarkdownDocument.undo) {
-            return undoManager?.canUndo == true
-        }
-        if menuItem.action == #selector(MarkdownDocument.redo) {
-            return undoManager?.canRedo == true
-        }
-        return super.validateMenuItem(menuItem)
     }
 }
 
