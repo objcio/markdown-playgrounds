@@ -26,19 +26,25 @@ import Cocoa
 struct Attributes {
     var family: String
     var size: CGFloat
-    var bold: Bool
-    var italic: Bool
-    var textColor: NSColor
-    var backgroundColor: NSColor
-    var firstlineHeadIndent: CGFloat
-    var headIndent: CGFloat
+    var bold: Bool = false
+    var italic: Bool = false
+    var textColor: NSColor = .textColor
+    var backgroundColor: NSColor = .textBackgroundColor
+    var firstlineHeadIndent: CGFloat = 0
+    var headIndent: CGFloat = 0
     var tabStops: [CGFloat]
-    var alignment: NSTextAlignment
-    var lineHeightMultiple: CGFloat
+    var alignment: NSTextAlignment = .left
+    var lineHeightMultiple: CGFloat = 1
 
     mutating func setIndent(_ value: CGFloat) {
         firstlineHeadIndent = value
         headIndent = value
+    }
+    
+    init(family: String, size: CGFloat) {
+        self.family = family
+        self.size = size
+        self.tabStops = (1..<10).map { CGFloat($0) * 2 * size }
     }
 
     var font: NSFont {
@@ -73,8 +79,7 @@ extension Attributes {
     }
 }
 
-let defaultAttributes = Attributes(family: "Helvetica", size: fontSize, bold: false, italic: false, textColor: NSColor.textColor, backgroundColor: NSColor.textBackgroundColor, firstlineHeadIndent: 0, headIndent: 0, tabStops: [], alignment: NSTextAlignment.left, lineHeightMultiple: 1.1)
-let fontSize: CGFloat = 18
+let defaultAttributes = Attributes(family: "Helvetica", size: 18)
 let accentColors: [NSColor] = [
     // From: https://ethanschoonover.com/solarized/#the-values
     (181, 137,   0),
@@ -112,18 +117,22 @@ extension NSMutableAttributedString {
         guard let parsed = Node(markdown: string) else { return [] }
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
+        func index(of pos: Position) -> String.Index {
+            return string.index(lineNumbers[Int(pos.line-1)], offsetBy: Int(pos.column-1))
+        }
         var result: [CodeBlock] = []
         parsed.visitAll(defaultAttributes) { el, attributes in
             guard el.start.column > 0 && el.start.line > 0 else { return }
-            let start = scalars.index(lineNumbers[Int(el.start.line-1)], offsetBy: Int(el.start.column-1))
-            let end = scalars.index(lineNumbers[Int(el.end.line-1)], offsetBy: Int(el.end.column-1))
+            let start = index(of: el.start)
+            let end = index(of: el.end)
             guard start <= end, start >= string.startIndex, end < string.endIndex else { return } // todo should be error?
             let range = start...end
             let nsRange = NSRange(range, in: string)
+            
             switch el.type {
             case CMARK_NODE_HEADING:
                 attributes.textColor = accentColors[1]
-                attributes.size = fontSize + 2 + (CGFloat(6-el.headerLevel)*1.7)
+                attributes.size = defaultAttributes.size + 2 + (CGFloat(6-el.headerLevel)*1.7)
                 addAttribute(.foregroundColor, value: attributes.textColor, range: nsRange)
                 addAttribute(.font, value: attributes.font, range: nsRange)
             case CMARK_NODE_EMPH:
@@ -143,15 +152,15 @@ extension NSMutableAttributedString {
                 addAttribute(.font, value: attributes.font, range: nsRange)
             case CMARK_NODE_BLOCK_QUOTE:
                 attributes.family = "Georgia"
-                attributes.setIndent(fontSize)
+                attributes.setIndent(defaultAttributes.size)
                 addAttribute(.font, value: attributes.font, range: nsRange)
                 addAttribute(.paragraphStyle, value: attributes.paragraphStyle, range: nsRange)
             case CMARK_NODE_LIST:
-                attributes.setIndent(fontSize)
+                attributes.setIndent(defaultAttributes.size)
                 addAttribute(.paragraphStyle, value: attributes.paragraphStyle, range: nsRange)
             case CMARK_NODE_CODE_BLOCK:
                 addAttribute(.backgroundColor, value: NSColor.windowBackgroundColor, range: nsRange)
-                addAttribute(.font, value: NSFont(name: "Monaco", size: fontSize)!, range: nsRange)
+                addAttribute(.font, value: NSFont(name: "Monaco", size: attributes.size)!, range: nsRange)
                 let block = CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!)
                 if let res = swiftHighlighter.cache[el.literal!] {
                     highlightCodeBlock(block: block, result: res)
