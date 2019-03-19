@@ -1,5 +1,6 @@
 import CommonMark
 import AppKit
+import Ccmark
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -59,9 +60,23 @@ class MarkdownDocument: NSDocument {
     }
 }
 
+extension String {
+    var lineOffsets: [String.Index] {
+        var result = [startIndex]
+        for i in indices {
+            if self[i] == "\n" { // todo check if we also need \r and \r\n
+                result.append(index(after: i))
+            }
+        }
+        return result
+    }
+}
+
 final class ViewController: NSViewController {
     let editor = NSTextView()
     let output = NSTextView()
+    var observerToken: Any?
+    
     override func loadView() {
         let editorSV = editor.configureAndWrapInScrollView(isEditable: true, inset: CGSize(width: 30, height: 10))
         let outputSV = output.configureAndWrapInScrollView(isEditable: false, inset: CGSize(width: 10, height: 10))
@@ -71,7 +86,57 @@ final class ViewController: NSViewController {
         
         self.view = splitView([editorSV, outputSV])
     }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        observerToken = NotificationCenter.default.addObserver(forName: NSTextView.didChangeNotification, object: editor, queue: nil) { [unowned self] _ in
+            self.parse()
+        }
+    }
+    
+    func parse() {
+        guard let attributedString = editor.textStorage else { return }
+        attributedString.highlightMarkdown()
+    }
+    
+    deinit {
+        if let t = observerToken { NotificationCenter.default.removeObserver(t) }
+    }
 }
+
+extension NSMutableAttributedString {
+    func highlightMarkdown() {
+        guard let node = Node(markdown: string) else { return }
+        
+        let lineOffsets = string.lineOffsets
+        func index(of pos: Position) -> String.Index {
+            let lineStart = lineOffsets[Int(pos.line-1)]
+            return string.index(lineStart, offsetBy: Int(pos.column-1))
+        }
+        
+        let defaultAttributes = Attributes(family: "Helvetica", size: 16)
+        setAttributes(defaultAttributes.atts, range: NSRange(location: 0, length: length))
+        
+        for c in node.children {
+            let start = index(of: c.start)
+            let end = index(of: c.end)
+            let nsRange = NSRange(start...end, in: string)
+            switch c.type {
+            case CMARK_NODE_HEADING:
+                addAttribute(.foregroundColor, value: NSColor.red, range: nsRange)
+            case CMARK_NODE_BLOCK_QUOTE:
+                addAttribute(.foregroundColor, value: NSColor.green, range: nsRange)
+            case CMARK_NODE_CODE_BLOCK:
+                var copy = defaultAttributes
+                copy.family = "Monaco"
+                addAttribute(.font, value: copy.font, range: nsRange)
+            default:
+                ()
+            }
+        }
+    }
+}
+
 
 let delegate = AppDelegate()
 let app = application(delegate: delegate)
