@@ -81,7 +81,7 @@ class REPL<Metadata> {
             defer { handle.waitForDataInBackgroundAndNotify() }
             let data = handle.availableData
             guard self.started else { return }
-            let str = String(data: data, encoding: .utf8)!
+            let str = String(decoding: data, as: UTF8.self)
             if handle === stdOut.fileHandleForReading {
                 self.stdOutParser.buffer += str
             } else {
