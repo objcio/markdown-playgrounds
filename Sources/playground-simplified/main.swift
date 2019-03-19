@@ -104,7 +104,7 @@ final class ViewController: NSViewController {
         let editorScrollView = editor.configureAndWrapInScrollView(isEditable: true, inset: CGSize(width: 30, height: 30))
         let outputScrollView = output.configureAndWrapInScrollView(isEditable: false, inset: CGSize(width: 10, height: 30))
         output.delegate = self
-        output.linkTextAttributes = [NSAttributedString.Key.cursor: NSCursor.pointingHand]
+        output.linkTextAttributes = [.cursor: NSCursor.pointingHand]
         editor.allowsUndo = true
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
