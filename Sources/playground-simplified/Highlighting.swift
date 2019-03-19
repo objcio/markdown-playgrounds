@@ -79,7 +79,7 @@ extension Attributes {
     }
 }
 
-let defaultAttributes = Attributes(family: "Helvetica", size: 18)
+let defaultAttributes = Attributes(family: "Helvetica", size: 16)
 let accentColors: [NSColor] = [
     // From: https://ethanschoonover.com/solarized/#the-values
     (181, 137,   0),
