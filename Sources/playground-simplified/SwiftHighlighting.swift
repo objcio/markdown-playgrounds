@@ -74,7 +74,7 @@ class SwiftHighlighter {
             let piece = pieces[currentIndex]
             let start = piece.index(piece.startIndex, offsetBy: distance)
             let distance2 = combined.distance(from: el.range.lowerBound, to: el.range.upperBound)
-            let end = piece.index(start, offsetBy: distance2)
+            let end = piece.index(start, offsetBy: distance2, limitedBy: piece.endIndex) ?? piece.endIndex
             el.range = start..<end
             separated[currentIndex].append(el)
         }
@@ -117,6 +117,34 @@ struct Token {
     var end: AbsolutePosition
 }
 
+extension TokenSyntax {
+    func enumerateAllTrivia(_ f: (TriviaPiece, _ start: AbsolutePosition, _ end: AbsolutePosition) -> ()) {
+        var pos = endPosition
+        for piece in trailingTrivia {
+            let endPos = pos + piece.sourceLength
+            f(piece, pos, endPos)
+            pos = endPos
+        }
+        
+        pos = position
+        for piece in leadingTrivia {
+            let endPos = pos + piece.sourceLength
+            f(piece, pos, endPos)
+            pos = endPos
+        }
+    }
+}
+
+extension TriviaPiece {
+    var isComment: Bool {
+        switch self {
+        case .lineComment, .blockComment, .docBlockComment, .docLineComment:
+            return true
+        default:
+            return false
+        }
+    }
+}
 class SwiftHighlighterRewriter: SyntaxRewriter {
     var result: [Token] = []
     override func visit(_ token: TokenSyntax) -> Syntax {
@@ -134,6 +162,11 @@ class SwiftHighlighterRewriter: SyntaxRewriter {
         }
         if let k = kind {
         	result.append(Token(kind: k, start: token.positionAfterSkippingLeadingTrivia, end: token.endPosition))
+        }
+        token.enumerateAllTrivia { piece, start, end in
+            if piece.isComment {
+                result.append(Token(kind: .comment, start: start, end: end))
+            }
         }
         return token
     }
