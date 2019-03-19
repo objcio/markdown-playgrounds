@@ -17,6 +17,19 @@ func application(delegate: AppDelegate) -> NSApplication {
     return app
 }
 
+func splitView(_ arrangedSubviews: [NSView]) -> NSSplitView {
+    let splitView = NSSplitView()
+    splitView.isVertical = true
+    splitView.dividerStyle = .thin
+    for v in arrangedSubviews {
+        splitView.addArrangedSubview(v)
+    }
+    splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
+    splitView.autoresizingMask = [.width, .height]
+    splitView.autosaveName = "SplitView"
+    return splitView
+}
+
 extension NSTextView {
     func configureAndWrapInScrollView(isEditable editable: Bool, inset: CGSize) -> NSScrollView {
         let scrollView = NSScrollView()

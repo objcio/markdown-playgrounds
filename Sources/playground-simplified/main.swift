@@ -1,99 +1,31 @@
 import CommonMark
 import AppKit
 
-let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!, .foregroundColor: NSColor.textColor]
-let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([.foregroundColor: NSColor.red], uniquingKeysWith: { $1 })
-
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
-        _ = MyDocumentController() // the first instance of `NSDocumentController` becomes the shared controller...
+        // the first instance of `NSDocumentController` becomes the shared controller...
+        _ = MarkdownDocumentController()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
     }
 }
 
-final class MyDocumentController: NSDocumentController {
-    override var documentClassNames: [String] { return ["MarkdownDocument"] }
-    override var defaultType: String? { return "MarkdownDocument" }
-    override func documentClass(forType typeName: String) -> AnyClass? {
-        return MarkdownDocument.self
-    }
-}
-
-struct MarkdownError: Error { }
-
-@objc(MarkdownDocument)
-final class MarkdownDocument: NSDocument {
-    static var cascadePoint = NSPoint.zero
-    
-    let contentViewController = ViewController()
-    var text: String {
-        get { return contentViewController.text }
-        set { contentViewController.text = newValue }
-    }
-    
-    override init() {
-        super.init()
-    }
-    
-    override class var readableTypes: [String] {
-        return ["public.text"]
-    }
-    
-    override class func isNativeType(_ type: String) -> Bool {
-        return true
-    }
-    
-    override func defaultDraftName() -> String {
-        return "My Playground"
-    }
-    
-    override func read(from data: Data, ofType typeName: String) throws {
-        guard let string = String(data: data, encoding: .utf8) else {
-            throw MarkdownError()
-        }
-        text = string
-    }
-    
-    override func data(ofType typeName: String) throws -> Data {
-        let text = contentViewController.editor.attributedString().string
-        contentViewController.editor.breakUndoCoalescing()
-        return text.data(using: .utf8)!
-    }
-    
-    override func makeWindowControllers() {
-        let window = NSWindow(contentViewController: contentViewController)
-        window.styleMask.formUnion(.fullSizeContentView)
-        window.setContentSize(NSSize(width: 800, height: 600))
-        window.minSize = NSSize(width: 400, height: 200)
-
-        let wc = NSWindowController(window: window)
-        wc.contentViewController = contentViewController
-        addWindowController(wc)
-
-        window.setFrameTopLeftPoint(NSPoint(x: 5, y: (NSScreen.main?.visibleFrame.maxY ?? 0) - 5))
-        MarkdownDocument.cascadePoint = window.cascadeTopLeft(from: MarkdownDocument.cascadePoint)
-        window.makeKeyAndOrderFront(nil)
-        window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
-    }
-}
+let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!, .foregroundColor: NSColor.textColor]
+let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([.foregroundColor: NSColor.red], uniquingKeysWith: { $1 })
 
 final class ViewController: NSViewController {
-    private var splitView = NSSplitView()
     let editor = NSTextView()
     let output = NSTextView()
     private var observationToken: Any?
     
     private var codeBlocks: [CodeBlock] = []
-    private var repl: REPL<CodeBlock>!
+    private var repl: REPL<CodeBlock>?
     private let swiftHighlighter = SwiftHighlighter()
 
     
     var text: String {
-        get {
-            return editor.string
-        }
+        get { return editor.string }
         set {
             editor.string = newValue
             highlight()
@@ -110,15 +42,7 @@ final class ViewController: NSViewController {
         c.priority = .defaultHigh
         c.isActive = true
         
-        splitView.isVertical = true
-        splitView.dividerStyle = .thin
-        splitView.addArrangedSubview(editorScrollView)
-        splitView.addArrangedSubview(outputScrollView)
-        splitView.setHoldingPriority(.defaultLow - 1, forSubviewAt: 0)
-        splitView.autoresizingMask = [.width, .height]
-        splitView.autosaveName = "SplitView"
-        
-        self.view = splitView
+        self.view = splitView([editorScrollView, outputScrollView])
     }
     
     override func viewDidLoad() {
@@ -140,6 +64,12 @@ final class ViewController: NSViewController {
     private func setupREPL() {
         repl = REPL(onOutput: { [unowned self] out in
             let codeblock = out.metadata
+            if let i = self.codeBlocks.firstIndex(where: { $0 == codeblock }) {
+                if self.codeBlocks[i].error != out.stdErr {
+                    self.codeBlocks[i].error = out.stdErr
+                    self.highlight()
+                }
+            }
             let text = out.stdOut.isEmpty ? "No output" : out.stdOut
             var atts = stdOutAttributes
             atts[.link] = codeblock.range
@@ -156,7 +86,7 @@ final class ViewController: NSViewController {
     
     func highlight() {
         guard let att = editor.textStorage else { return }
-        codeBlocks = att.highlightMarkdown(swiftHighlighter)
+        codeBlocks = att.highlightMarkdown(swiftHighlighter, codeBlocks: codeBlocks)
         guard !codeBlocks.isEmpty else { return }
         do {
             // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
@@ -170,23 +100,24 @@ final class ViewController: NSViewController {
     @objc func execute() {
         guard let r = editor.selectedRanges.first?.rangeValue else { return }
         guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
-        repl.evaluate(found.text, metadata: found)
+        repl?.evaluate(found.text, metadata: found)
     }
     
     @objc func executeAll() {
         for b in codeBlocks {
             if b.fenceInfo == "swift-error" || b.fenceInfo == "swift-example" { continue }
-            repl.evaluate(b.text, metadata: b)
+            repl?.evaluate(b.text, metadata: b)
         }
     }
     
     @objc func reset() {
         setupREPL()
+        output.string = ""
     }
     
     func scrollToError(_ range: NSRange) {
         editor.scrollRangeToVisible(range)
-        editor.selectedRanges = [NSValue(range: range)]
+        editor.selectedRanges = [NSValue(range: NSRange(location: range.location, length: 0))]
         editor.window?.makeFirstResponder(editor)
     }
 }

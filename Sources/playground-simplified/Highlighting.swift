@@ -92,10 +92,11 @@ let accentColors: [NSColor] = [
     (133, 153,   0)
 ].map { NSColor(calibratedRed: CGFloat($0.0) / 255, green: CGFloat($0.1) / 255, blue: CGFloat($0.2) / 255, alpha: 1)}
 
-struct CodeBlock {
-    let range: NSRange
-    let fenceInfo: String?
-    let text: String
+struct CodeBlock: Equatable {
+    var range: NSRange
+    var fenceInfo: String?
+    var text: String
+    var error: String?
 }
 
 extension CommonMark.Node {
@@ -112,8 +113,9 @@ extension CommonMark.Node {
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
-    func highlightMarkdown(_ swiftHighlighter: SwiftHighlighter) -> [CodeBlock] {
+    func highlightMarkdown(_ swiftHighlighter: SwiftHighlighter, codeBlocks: [CodeBlock]) -> [CodeBlock] {
         setAttributes(defaultAttributes.atts, range: range)
+        let codeBlocksWithError = codeBlocks.filter { $0.error != nil }
         guard let parsed = Node(markdown: string) else { return [] }
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
@@ -161,9 +163,13 @@ extension NSMutableAttributedString {
             case CMARK_NODE_CODE_BLOCK:
                 addAttribute(.backgroundColor, value: NSColor.windowBackgroundColor, range: nsRange)
                 addAttribute(.font, value: NSFont(name: "Monaco", size: attributes.size)!, range: nsRange)
-                let block = CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!)
+                var block = CodeBlock(range: nsRange, fenceInfo: el.fenceInfo, text: el.literal!, error: nil)
                 if let res = swiftHighlighter.cache[el.literal!] {
                     highlightCodeBlock(block: block, result: res)
+                }
+                if let i = codeBlocksWithError.firstIndex(where: { $0.range == block.range }) {
+                    block.error = codeBlocksWithError[i].error
+                    addAttribute(.backgroundColor, value: NSColor.windowBackgroundColor.blended(withFraction: 0.1, of: NSColor.red)!, range: nsRange)
                 }
                 result.append(block)
             default:
