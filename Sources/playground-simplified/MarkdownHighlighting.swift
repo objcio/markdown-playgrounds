@@ -12,10 +12,12 @@ import Ccmark
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
-    func highlightMarkdown() {
-        guard let node = Node(markdown: string) else { return }
+    func highlightMarkdown() -> [CodeBlock] {
+        guard let node = Node(markdown: string) else { return [] }
         
         let lineOffsets = string.lineOffsets
+        var codeBlocks: [CodeBlock] = []
+        
         func index(of pos: Position) -> String.Index {
             let lineStart = lineOffsets[Int(pos.line-1)]
             return string.index(lineStart, offsetBy: Int(pos.column-1), limitedBy: string.endIndex) ?? string.endIndex
@@ -61,11 +63,17 @@ extension NSMutableAttributedString {
             case CMARK_NODE_CODE_BLOCK:
                 addAttribute(.backgroundColor, value: NSColor.windowBackgroundColor, range: nsRange)
                 addAttribute(.font, value: NSFont(name: "Monaco", size: attributes.size)!, range: nsRange)
+                codeBlocks.append(CodeBlock(text: c.literal!, range: nsRange))
             default:
                 break
             }
         }
+        return codeBlocks
     }
 }
 
+struct CodeBlock {
+    var text: String
+    var range: NSRange
+}
 
