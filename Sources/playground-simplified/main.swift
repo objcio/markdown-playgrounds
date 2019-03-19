@@ -138,16 +138,18 @@ final class ViewController: NSViewController {
     }
 
     private func setupREPL() {
-        repl = REPL(onStdOut: { out, codeblock in
-            let text = out.isEmpty ? "No output" : out
+        repl = REPL(onOutput: { [unowned self] out in
+            let codeblock = out.metadata
+            let text = out.stdOut.isEmpty ? "No output" : out.stdOut
             var atts = stdOutAttributes
             atts[.link] = codeblock.range
             self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: atts))
-            self.output.scrollToEndOfDocument(nil)
-        }, onStdErr: { out, codeblock in
-            var atts = stdErrAttributes
-            atts[.link] = codeblock.range
-            self.output.textStorage?.append(NSAttributedString(string: out + "\n", attributes: atts))
+            if let e = out.stdErr {
+                var atts = stdErrAttributes
+                atts[.link] = codeblock.range
+                self.output.textStorage?.append(NSAttributedString(string: e + "\n", attributes: atts))
+                self.scrollToError(codeblock.range)
+            }
             self.output.scrollToEndOfDocument(nil)
         })
     }
@@ -181,14 +183,18 @@ final class ViewController: NSViewController {
     @objc func reset() {
         setupREPL()
     }
+    
+    func scrollToError(_ range: NSRange) {
+        editor.scrollRangeToVisible(range)
+        editor.selectedRanges = [NSValue(range: range)]
+        editor.window?.makeFirstResponder(editor)
+    }
 }
 
 extension ViewController: NSTextViewDelegate {
     func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
         guard let u = link as? NSRange else { return false }
-        editor.scrollRangeToVisible(u)
-        editor.selectedRanges = [NSValue(range: u)]
-        editor.window?.makeFirstResponder(editor)
+        scrollToError(u)
         return true
     }
 }

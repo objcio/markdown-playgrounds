@@ -51,13 +51,18 @@ class REPL<Metadata> {
     private var started = false
     private var queue: [Metadata] = []
     
-    init(onStdOut: @escaping (String, Metadata) -> (), onStdErr: @escaping (String, Metadata) -> ()) {
+    struct Output<M> {
+        let stdOut: String
+        let stdErr: String?
+        let metadata: M
+    }
+    
+    init(onOutput: @escaping (Output<Metadata>) -> ()) {
         self.stdOutParser = REPLParser { [unowned self] output in
             let metadata = self.queue.remove(at: 0)
-            onStdOut(output, metadata)
             let err = self.stdErrBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !err.isEmpty { onStdErr(err, metadata) }
             self.stdErrBuffer = ""
+            onOutput(Output(stdOut: output, stdErr: err.isEmpty ? nil : err, metadata: metadata))
         }
         
         let stdOut = Pipe()
