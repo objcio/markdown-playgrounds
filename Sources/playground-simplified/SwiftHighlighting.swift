@@ -119,19 +119,20 @@ struct Token {
 
 extension TokenSyntax {
     func enumerateAllTrivia(_ f: (TriviaPiece, _ start: AbsolutePosition, _ end: AbsolutePosition) -> ()) {
-        var pos = endPosition
+        var pos = position
+        for piece in leadingTrivia {
+            let endPos = pos + piece.sourceLength
+            f(piece, pos, endPos)
+            pos = endPos
+        }
+        
+        pos = endPosition
         for piece in trailingTrivia {
             let endPos = pos + piece.sourceLength
             f(piece, pos, endPos)
             pos = endPos
         }
         
-        pos = position
-        for piece in leadingTrivia {
-            let endPos = pos + piece.sourceLength
-            f(piece, pos, endPos)
-            pos = endPos
-        }
     }
 }
 
