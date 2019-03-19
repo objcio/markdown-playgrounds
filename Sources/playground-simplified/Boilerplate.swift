@@ -82,13 +82,6 @@ extension NSApplication {
         appMenu.submenu?.addItem(NSMenuItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""))
         appMenu.submenu?.addItem(NSMenuItem.separator())
         appMenu.submenu?.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-        
-        let codeMenu = NSMenuItem()
-        codeMenu.submenu = NSMenu(title: "Code")
-        codeMenu.submenu?.addItem(NSMenuItem(title: "Execute", action: #selector(ViewController.execute), keyEquivalent: "e"))
-        codeMenu.submenu?.addItem(NSMenuItem(title: "Execute All", action: #selector(ViewController.executeAll), keyEquivalent: "E"))
-        codeMenu.submenu?.addItem(NSMenuItem.separator())
-        codeMenu.submenu?.addItem(NSMenuItem(title: "Reset", action: #selector(ViewController.reset), keyEquivalent: "r"))
 
         let fileMenu = NSMenuItem()
         fileMenu.submenu = NSMenu(title: "File")
@@ -120,8 +113,19 @@ extension NSApplication {
         mainMenu.addItem(appMenu)
         mainMenu.addItem(fileMenu)
         mainMenu.addItem(editMenu)
-        mainMenu.addItem(codeMenu)
         mainMenu.addItem(windowMenu)
         return mainMenu
     }
 }
+
+let accentColors: [NSColor] = [
+    // From: https://ethanschoonover.com/solarized/#the-values
+    (181, 137,   0),
+    (203,  75,  22),
+    (220,  50,  47),
+    (211,  54, 130),
+    (108, 113, 196),
+    ( 38, 139, 210),
+    ( 42, 161, 152),
+    (133, 153,   0)
+    ].map { NSColor(calibratedRed: CGFloat($0.0) / 255, green: CGFloat($0.1) / 255, blue: CGFloat($0.2) / 255, alpha: 1)}
