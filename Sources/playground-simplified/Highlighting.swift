@@ -120,7 +120,7 @@ extension NSMutableAttributedString {
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
         func index(of pos: Position) -> String.Index {
-            return string.index(lineNumbers[Int(pos.line-1)], offsetBy: Int(pos.column-1))
+            return string.utf8.index(lineNumbers[Int(pos.line-1)], offsetBy: Int(pos.column-1))
         }
         var result: [CodeBlock] = []
         parsed.visitAll(defaultAttributes) { el, attributes in
