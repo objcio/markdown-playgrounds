@@ -2,12 +2,23 @@ import CommonMark
 import AppKit
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    var applicationHasStarted = false
+    
     func applicationWillFinishLaunching(_ notification: Notification) {
         // the first instance of `NSDocumentController` becomes the shared controller...
         _ = MarkdownDocumentController()
     }
-
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
+        applicationHasStarted = true
+    }
+
+    func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
+        guard !applicationHasStarted else { return true }
+        let controller = NSDocumentController.shared
+        guard let recent = controller.recentDocumentURLs.first else { return true }
+        controller.openDocument(withContentsOf: recent, display: true, completionHandler: { _, _, _ in () })
+        return false
     }
 }
 
