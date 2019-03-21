@@ -112,7 +112,9 @@ final class ViewController: NSViewController {
     
     @objc func reset() {
         setupREPL()
+        for i in codeBlocks.indices { codeBlocks[i].error = nil } // reset error states
         output.string = ""
+        highlight() // resets the error state in code blocks
     }
     
     func scrollToError(_ range: NSRange) {
