@@ -153,7 +153,7 @@ extension NSMutableAttributedString {
                 attributes.family = "Monaco"
                 addAttribute(.font, value: attributes.font, range: nsRange)
             case CMARK_NODE_BLOCK_QUOTE:
-                attributes.family = "Georgia"
+                attributes.italic = true
                 attributes.setIndent(defaultAttributes.size)
                 addAttribute(.font, value: attributes.font, range: nsRange)
                 addAttribute(.paragraphStyle, value: attributes.paragraphStyle, range: nsRange)
