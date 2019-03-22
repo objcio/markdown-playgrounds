@@ -74,25 +74,37 @@ final class ViewController: NSViewController {
 
     private func setupREPL() {
         repl = REPL(onOutput: { [unowned self] out in
-            let codeblock = out.metadata
-            if let i = self.codeBlocks.firstIndex(where: { $0 == codeblock }) {
-                if self.codeBlocks[i].error != out.stdErr {
-                    self.codeBlocks[i].error = out.stdErr
-                    self.highlight()
-                }
-            }
-            let text = out.stdOut.isEmpty ? "No output" : out.stdOut
-            var atts = stdOutAttributes
-            atts[.link] = codeblock.range
-            self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: atts))
-            if let e = out.stdErr {
-                var atts = stdErrAttributes
-                atts[.link] = codeblock.range
-                self.output.textStorage?.append(NSAttributedString(string: e + "\n", attributes: atts))
-                self.scrollToError(codeblock.range)
-            }
-            self.output.scrollToEndOfDocument(nil)
+           self.writeOutput(out)
         })
+    }
+    
+    func writeOutput(_ out: REPL<CodeBlock>.Output<CodeBlock>) {
+        let codeblock = out.metadata
+        if let i = self.codeBlocks.firstIndex(where: { $0 == codeblock }) {
+            if self.codeBlocks[i].error != out.stdErr {
+                self.codeBlocks[i].error = out.stdErr
+                self.highlight()
+            }
+        }
+        let text = out.stdOut.isEmpty ? "No output" : out.stdOut
+        writeOutput(text, source: codeblock)
+        if let e = out.stdErr {
+        	writeError(e, source: codeblock)
+            self.scrollToError(codeblock.range)
+        }
+        self.output.scrollToEndOfDocument(nil)
+    }
+    
+    func writeOutput(_ text: String, source: CodeBlock) {
+        var atts = stdOutAttributes
+        atts[.link] = source.range
+        self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: atts))
+    }
+    
+    func writeError(_ string: String, source: CodeBlock) {
+        var atts = stdErrAttributes
+        atts[.link] = source.range
+        self.output.textStorage?.append(NSAttributedString(string: string + "\n", attributes: atts))
     }
     
     func highlight() {
@@ -111,7 +123,15 @@ final class ViewController: NSViewController {
     @objc func execute() {
         guard let r = editor.selectedRanges.first?.rangeValue else { return }
         guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
-        repl?.evaluate(found.text, metadata: found)
+        switch found.fenceInfo {
+        case "swift", "swift-test":
+            repl?.evaluate(found.text, metadata: found)
+        case "swift-example":
+            writeOutput("Not executing sample-only code", source: found)
+        default:
+            writeError("Unkown source type: \(found.fenceInfo ?? "<none>")", source: found)
+        }
+        
     }
     
     @objc func executeAll() {
