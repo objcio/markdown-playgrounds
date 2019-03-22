@@ -153,6 +153,10 @@ final class ViewController: NSViewController {
         editor.selectedRanges = [NSValue(range: NSRange(location: range.location, length: 0))]
         editor.window?.makeFirstResponder(editor)
     }
+    
+    func scrollTo(position: String.Index) {
+        editor.scrollRangeToVisible(NSRange(position...position, in: editor.string))
+    }
 }
 
 extension ViewController: NSTextViewDelegate {

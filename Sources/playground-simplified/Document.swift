@@ -25,7 +25,14 @@ final class MarkdownDocument: NSDocument {
     let contentViewController = ViewController()
     var text: String {
         get { return contentViewController.text }
-        set { contentViewController.text = newValue }
+        set {
+            guard contentViewController.text != newValue else { return } // don't trigger unnecessary sets
+            let i = contentViewController.text.indexOfFirstDifference(in: newValue)
+            contentViewController.text = newValue
+            if let j = i {
+            	contentViewController.scrollTo(position: j)
+            }
+        }
     }
     
     override init() {
@@ -49,6 +56,23 @@ final class MarkdownDocument: NSDocument {
             throw MarkdownError()
         }
         text = string
+    }
+    
+    override func presentedItemDidChange() {
+        // todo: I think this could somehow be done more easily with file coordinators?
+        guard let u = presentedItemURL else { return }
+        DispatchQueue.main.async {
+            do {
+                guard !self.hasUnautosavedChanges else {
+                    Swift.print("Not going to observe changes because the document is dirty.")
+                    return
+                }
+                let contents = try Data(contentsOf: u)
+                try self.read(from: contents, ofType: "")
+            } catch {
+                Swift.print(error)
+            }
+    	}
     }
     
     override func data(ofType typeName: String) throws -> Data {
