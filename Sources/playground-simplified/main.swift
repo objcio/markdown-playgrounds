@@ -159,17 +159,6 @@ final class REPL {
     }
 }
 
-extension CommonMark.Node {
-    /// When visiting a node, you can modify the state, and the modified state gets passed on to all children.
-    func visitAll<State>(_ initial: State, _ callback: (Node, inout State) -> ()) {
-        for c in children {
-            var copy = initial
-            callback(c, &copy)
-            c.visitAll(copy, callback)
-        }
-    }
-}
-
 
 let delegate = AppDelegate()
 let app = application(delegate: delegate)
