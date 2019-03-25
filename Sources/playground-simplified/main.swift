@@ -64,7 +64,8 @@ extension String {
     var lineOffsets: [String.Index] {
         var result = [startIndex]
         for i in indices {
-            if self[i] == "\n" { // todo check if we also need \r and \r\n
+            let c = self[i]
+            if c == "\n" || c == "\r" || c == "\r\n" {
                 result.append(index(after: i))
             }
         }
