@@ -20,13 +20,16 @@ extension NSMutableAttributedString {
         
         func index(of pos: Position) -> String.Index {
             let lineStart = lineOffsets[Int(pos.line-1)]
-            return string.index(lineStart, offsetBy: Int(pos.column-1), limitedBy: string.endIndex) ?? string.endIndex
+            // We don't use endIndex but the index before, because we use it in a closed range
+            let lastValidIndex = string.index(before: string.endIndex)
+            return string.utf8.index(lineStart, offsetBy: Int(pos.column-1), limitedBy: lastValidIndex) ?? lastValidIndex
         }
         
         let defaultAttributes = Attributes(family: "Helvetica", size: 16)
         setAttributes(defaultAttributes.atts, range: range)
         
         node.visitAll(defaultAttributes) { c, attributes in
+            guard c.start.line != 0 else { return } // CommonMark returns (0, 0) position for soft breaks
             let start = index(of: c.start)
             let end = index(of: c.end)
             guard start < end else { return }
