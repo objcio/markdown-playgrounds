@@ -121,32 +121,50 @@ final class ViewController: NSViewController {
     }
 }
 
+
+
+struct REPLBuffer {
+    private var buffer = Data()
+    private let onResult: (String) -> ()
+    
+    init(onResult: @escaping (String) -> ()) {
+        self.onResult = onResult
+    }
+    
+    mutating func append(_ data: Data) {
+        buffer.append(data)
+        guard let s = String(data: buffer, encoding: .utf8), s.last?.isNewline == true else { return }
+        buffer.removeAll()
+        onResult(s)
+    }
+}
+
 final class REPL {
     private let process = Process()
     private let stdIn = Pipe()
     private let stdErr = Pipe()
     private let stdOut = Pipe()
-    
     private var stdOutToken: Any?
     private var stdErrToken: Any?
+    private var stdOutBuffer: REPLBuffer
+    private var stdErrBuffer: REPLBuffer
 
     init(onStdOut: @escaping (String) -> (), onStdErr: @escaping (String) -> ()) {
         process.launchPath = "/usr/bin/swift"
         process.standardInput = stdIn.fileHandleForReading
         process.standardOutput = stdOut.fileHandleForWriting
         process.standardError = stdErr.fileHandleForWriting
-        
+    
+        self.stdOutBuffer = REPLBuffer { onStdOut($0) }
+        self.stdErrBuffer = REPLBuffer { onStdErr($0) }
+
         stdOutToken = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: stdOut.fileHandleForReading, queue: nil, using: { [unowned self] note in
-            let data = self.stdOut.fileHandleForReading.availableData
-            let string = String(data: data, encoding: .utf8)!
-            onStdOut(string)
+            self.stdOutBuffer.append(self.stdOut.fileHandleForReading.availableData)
             self.stdOut.fileHandleForReading.waitForDataInBackgroundAndNotify()
         })
 
         stdErrToken = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: stdErr.fileHandleForReading, queue: nil, using: { [unowned self] note in
-            let data = self.stdErr.fileHandleForReading.availableData
-            let string = String(data: data, encoding: .utf8)!
-            onStdErr(string)
+            self.stdErrBuffer.append(self.stdErr.fileHandleForReading.availableData)
             self.stdErr.fileHandleForReading.waitForDataInBackgroundAndNotify()
         })
 
