@@ -102,6 +102,7 @@ final class ViewController: NSViewController {
         observerToken = NotificationCenter.default.addObserver(forName: NSTextView.didChangeNotification, object: editor, queue: nil) { [unowned self] _ in
             self.parse()
         }
+        self.parse()
     }
     
     func parse() {
