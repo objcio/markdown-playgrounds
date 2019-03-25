@@ -158,6 +158,11 @@ final class REPL {
     func execute(_ code: String) {
         stdIn.fileHandleForWriting.write(code.data(using: .utf8)!)
     }
+    
+    deinit {
+        if let t = stdOutToken { NotificationCenter.default.removeObserver(t) }
+        if let t = stdErrToken { NotificationCenter.default.removeObserver(t) }
+    }
 }
 
 
