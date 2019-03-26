@@ -185,6 +185,8 @@ final class REPL {
 }
 
 
-let delegate = AppDelegate()
-let app = application(delegate: delegate)
-app.run()
+public func markdownPlaygroundsMain() {
+    let delegate = AppDelegate()
+    let app = application(delegate: delegate)
+    app.run()
+}
