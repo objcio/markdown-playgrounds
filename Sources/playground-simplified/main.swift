@@ -108,6 +108,14 @@ final class ViewController: NSViewController {
     }
     
     func highlight() {
+        var wordCount: Block<Add> = collect()
+        wordCount.inline.text = { Add($0.split(separator: " ").count) }        
+        print(Node(markdown: editor.string)!.reduce(wordCount))
+        
+        var links: Block<[String]> = collect()
+        links.inline.link = { _, _, url in url.map { [$0] } ?? [] }
+        print(Node(markdown: editor.string)!.reduce(links))
+        
         guard let att = editor.textStorage else { return }
         codeBlocks = att.highlightMarkdown(swiftHighlighter, codeBlocks: codeBlocks)
         guard !codeBlocks.isEmpty else { return }
