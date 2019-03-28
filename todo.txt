@@ -1,5 +1,6 @@
 - [ ] Make sure things are at least a little faster again for large files.
 - [ ] Link checker
+- [ ] Have a nice and simple Markdown document we can use as the "empty" document for when the application launches (with some sample code etc.)
 - [ ] Come up with a good (defined) scheme for fence names
 - [ ] Auto-completion/formatting using SourceKitten?
 - [ ] "Halt on Error" checkmark menu item that halts when an error happens
