@@ -1,3 +1,5 @@
-# playground-simplified
+# Markdown Playgrounds for Swift
 
-Note: at the time of writing, in order for this to work, you need to have [cmark](https://github.com/commonmark/cmark) installed from master (not via homebrew)
+## Prerequisites
+
+- You need to have [cmark](https://github.com/commonmark/cmark) installed from master (not via homebrew). If you use the version from homebrew, you won't get proper syntax highlighting (especially for inline elements).
