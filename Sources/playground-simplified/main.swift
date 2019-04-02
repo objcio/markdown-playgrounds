@@ -108,12 +108,14 @@ final class ViewController: NSViewController {
     }
     
     func highlight() {
+        // todo: this code has too much knowledge about the highlighter.
         guard let att = editor.textStorage else { return }
         codeBlocks = att.highlightMarkdown(swiftHighlighter, codeBlocks: codeBlocks)
         guard !codeBlocks.isEmpty else { return }
         do {
             // if the call to highlight is *within* a `beginEditing` block, it crashes (!)
-            let zipped = zip(codeBlocks, try self.swiftHighlighter.highlight(codeBlocks.map { $0.text }))
+            let filtered = codeBlocks.filter { swiftHighlighter.cache[$0.text] == nil }
+            let zipped = zip(filtered, try swiftHighlighter.highlight(filtered.map { $0.text }))
             for (block, result) in zipped {
                 att.highlightCodeBlock(block: block, result: result)
             }
