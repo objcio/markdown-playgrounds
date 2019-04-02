@@ -1,3 +1,5 @@
+- [ ] Make sure things are at least a little faster again for large files.
+- [ ] Link checker
 - [ ] Come up with a good (defined) scheme for fence names
 - [ ] Auto-completion/formatting using SourceKitten?
 - [ ] "Halt on Error" checkmark menu item that halts when an error happens
@@ -6,6 +8,8 @@
 - [ ] Search (and replace)
 - [ ] Reload the file when it has changed on disk (override NSDocument's presentedItemDidChange)
 - [ ] Have an (optional?) clickable outline-view of the document on the left-hand-side of the splitview.
+- [ ] Parse yaml preamble?
+- [ ] Allow for a way to have "rich" results. Maybe we could do something with HTML?
 
 - [x] Have a way to go back to the source code from an error in the console (could be a link)
 - [x] Something is wrong with conforming to certain protocols (e.g. list and ExpressibleByArrayLiteral).
