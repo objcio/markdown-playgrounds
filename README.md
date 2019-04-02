@@ -4,7 +4,7 @@ This app is a way to read and write Markdown documents that contain Swift code. 
 
 The app works by sending Swift code into a REPL instance, and reading the results back. Compare to Swift Playgrounds or Xcode's playgrounds, this is quite limiting, but it also means we can keep things simple.
 
-![](https://www.dropbox.com/s/az3f2m3kydg0qxa/Screen%20Shot%202019-04-02%20at%2012.51.40.png?dl=1)
+<img width="912" alt="Screen Shot 2019-04-02 at 12 51 40" src="https://user-images.githubusercontent.com/5382/55397985-bdfca180-5547-11e9-8820-7cf3012c6e53.png">
 
 We're documenting the building of this app on [Swift Talk](https://talk.objc.io/collections/markdown-playgrounds).
 
