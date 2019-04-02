@@ -1,4 +1,6 @@
 - [ ] Make sure things are at least a little faster again for large files.
+   - In a perfect world, we'd only re-highlight the paragraphs that have changed...
+   - As a workaround, we could either highlight code blocks asynchronously, or do it when typing stops?
 - [ ] Link checker
 - [ ] Come up with a good (defined) scheme for fence names
 - [ ] Auto-completion/formatting using SourceKitten?
