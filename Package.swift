@@ -9,7 +9,7 @@ let package = Package(
         .macOS(.v10_14)
     ],
     dependencies: [
-        .package(url: "https://github.com/objcio/commonmark-swift", .branch("swift-5")),
+        .package(url: "https://github.com/chriseidhof/commonmark-swift", .branch("master")),
         .package(url: "https://github.com/apple/swift-syntax.git", .exact("0.40200.0")),
     ],
     targets: [

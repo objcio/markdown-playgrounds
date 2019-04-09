@@ -95,15 +95,15 @@ final class ViewController: NSViewController {
         self.output.scrollToEndOfDocument(nil)
     }
     
-    func writeOutput(_ text: String, source: CodeBlock) {
+    func writeOutput(_ text: String, source: CodeBlock?) {
         var atts = stdOutAttributes
-        atts[.link] = source.range
+        if let s = source { atts[.link] = s.range }
         self.output.textStorage?.append(NSAttributedString(string: text + "\n", attributes: atts))
     }
     
-    func writeError(_ string: String, source: CodeBlock) {
+    func writeError(_ string: String, source: CodeBlock?) {
         var atts = stdErrAttributes
-        atts[.link] = source.range
+        if let s = source { atts[.link] = s.range }
         self.output.textStorage?.append(NSAttributedString(string: string + "\n", attributes: atts))
     }
     
@@ -148,6 +148,62 @@ final class ViewController: NSViewController {
         for i in codeBlocks.indices { codeBlocks[i].error = nil } // reset error states
         output.string = ""
         highlight() // resets the error state in code blocks
+    }
+    
+    @objc func verifyLinks() {
+        var collectLinks: BlockAlgebra<[String]> = collect()
+        collectLinks.inline.link = { _, _, url in url.map { [$0] } ?? [] }
+        let links = Node(markdown: editor.string)!.reduce(collectLinks)
+        struct ValidationError: Error {
+            let str: String
+            init(_ str: String) { self.str = str }
+        }
+        let realURLs: [Result<URL, Error>] = links.map { l in
+            return Result(catching: {
+            guard let u = URL(string: l) else {
+                throw ValidationError("Invalid URL \(l)")
+            }
+            guard let comps = URLComponents(url: u, resolvingAgainstBaseURL: false) else {
+                throw ValidationError("No valid components: \(u)")
+            }
+            guard comps.scheme != nil else {
+                throw ValidationError("local link: \(l)") // todo
+            }
+                
+            return u
+        })}
+        let counter = Atomic<Set<URL>>([])
+        for u in realURLs {
+            switch u {
+            case let .failure(s): writeError("\(s)", source: nil)
+            case let .success(url): counter.mutate { $0.insert(url) }
+            }
+        }
+    
+        for url in counter.value {
+            var request = URLRequest(url: url, timeoutInterval: 3)
+            request.httpMethod = "HEAD"
+            URLSession.shared.dataTask(with: request, completionHandler: { data, response, err in
+                counter.mutate {
+                    $0.remove(url)
+                    print("\($0) links remaining")
+                }
+                let httpResponse = response as? HTTPURLResponse
+                DispatchQueue.main.async {
+                    if httpResponse?.statusCode == 200 {
+                        self.writeOutput("OK \(url)", source: nil)
+                    } else if let code = httpResponse?.statusCode {
+                        self.writeError("\(code) \(url)", source: nil)
+                    } else {
+                        self.writeError("\(err!.localizedDescription) \(url)", source: nil)
+                    }
+                    if counter.value.isEmpty {
+                        self.writeOutput("Done checking links", source: nil)
+                    }
+                }
+                
+            }).resume()
+        }
     }
     
     func scrollToError(_ range: NSRange) {
