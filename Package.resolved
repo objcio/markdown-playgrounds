@@ -3,10 +3,10 @@
     "pins": [
       {
         "package": "CommonMark",
-        "repositoryURL": "https://github.com/objcio/commonmark-swift",
+        "repositoryURL": "https://github.com/chriseidhof/commonmark-swift",
         "state": {
-          "branch": "swift-5",
-          "revision": "c513552584eda6507dbca5e2fcc8167c8f9f859e",
+          "branch": "master",
+          "revision": "32d9017120ac52249debbea87f3e1c5c4023f4d3",
           "version": null
         }
       },

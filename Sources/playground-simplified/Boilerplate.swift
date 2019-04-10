@@ -102,6 +102,8 @@ extension NSApplication {
         codeMenu.submenu?.addItem(NSMenuItem(title: "Execute All", action: #selector(ViewController.executeAll), keyEquivalent: "E"))
         codeMenu.submenu?.addItem(NSMenuItem.separator())
         codeMenu.submenu?.addItem(NSMenuItem(title: "Reset", action: #selector(ViewController.reset), keyEquivalent: "r"))
+        codeMenu.submenu?.addItem(NSMenuItem.separator())
+        codeMenu.submenu?.addItem(NSMenuItem(title: "Verify Links", action: #selector(ViewController.verifyLinks), keyEquivalent: ""))
 
         let fileMenu = NSMenuItem()
         fileMenu.submenu = NSMenu(title: "File")
