@@ -21,11 +21,9 @@ We're documenting the building of this app on [Swift Talk](https://talk.objc.io/
 The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) previews the app, and is free to watch.
 
 - 145: [Setting Up a Document Based App](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) — 🆓 Public
-- 146: [Markdown Syntax Highlighting](https://talk.objc.io/episodes/S01E146-markdown-syntax-highlighting) — 🔒 Subscribers
+- 146: [Markdown Syntax Highlighting](https://talk.objc.io/episodes/S01E146-markdown-syntax-highlighting) — 🔒 Subscriber
 - 147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — 📦 Unreleased
-- 148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — — 📦 Unreleased
-
-<img width="912" alt="Screen Shot 2019-04-02 at 12 51 40" src="https://user-images.githubusercontent.com/5382/55397985-bdfca180-5547-11e9-8820-7cf3012c6e53.png">
+- 148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — 📦 Unreleased
 
 <a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
   <img width="500" alt="video cover" src="https://i.vimeocdn.com/video/769411132.jpg">
@@ -44,4 +42,4 @@ To keep things simple, we have collected a list of todos in [todo.txt](todo.txt)
 
 ## License
 
-This library is released under the MIT license. See LICENSE for details.
+This library is released under the MIT license. See [LICENSE](LICENSE) for details.
