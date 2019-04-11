@@ -1,5 +1,7 @@
 # 🎰 Markdown Playgrounds for Swift
 
+[![Swift 5](https://img.shields.io/badge/swift-5-ED523F.svg?style=flat)](https://swift.org/download/) [![Swift Package Manager compatible](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager) [![@objcio](https://img.shields.io/badge/contact-%40objcio-blue.svg?style=flat)](https://twitter.com/objcio)
+
 This app reads and writes Markdown documents that contain Swift code. This code can be executed as well: you can run individual code blocks, or all the blocks in a file.
 
 We're using this app to update our book [Advanced Swift](https://www.objc.io/books/advanced-swift/), and while blogging — it's very useful!
