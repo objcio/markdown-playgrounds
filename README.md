@@ -18,6 +18,12 @@ The app works by sending Swift code to a REPL instance, and reading back the res
 
 We're documenting the building of this app on [Swift Talk](https://talk.objc.io/collections/markdown-playgrounds), a weekly video series of conversational live-coding hosted by [Chris Eidhof](https://twitter.com/chriseidhof) and [Florian Kugler](https://twitter.com/floriankugler).
 
+<p align="center">
+    <a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
+      <img width="600" alt="video cover" src="https://i.vimeocdn.com/video/769411132.jpg">
+    </a>
+</p>
+
 The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) previews the app, and is free to watch.
 
 - 145: [Setting Up a Document Based App](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) — 🆓 Public
@@ -25,12 +31,6 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 - 147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — 📦 Unreleased
 - 148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — 📦 Unreleased
 
-
-<p align="center">
-    <a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
-      <img width="600" alt="video cover" src="https://i.vimeocdn.com/video/769411132.jpg">
-    </a>
-</p>
 
 ## Building
 
