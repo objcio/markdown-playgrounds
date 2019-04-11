@@ -25,9 +25,12 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 - 147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — 📦 Unreleased
 - 148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — 📦 Unreleased
 
-<a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
-  <img width="500" alt="video cover" src="https://i.vimeocdn.com/video/769411132.jpg">
-</a>
+
+<p align="center">
+    <a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
+      <img width="600" alt="video cover" src="https://i.vimeocdn.com/video/769411132.jpg">
+    </a>
+</p>
 
 ## Building
 
