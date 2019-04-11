@@ -68,3 +68,26 @@ func linkChecker(_ links: [String], _ callback: @escaping (LinkCheckResult) -> (
         }).resume()
     }
 }
+
+extension String {
+    fileprivate func linkAnchor() -> String? {
+        if let curlyIdx = self.firstIndex(of: "{") {
+            let start = self[curlyIdx...]
+            if start.hasPrefix("{#"), let end = start.firstIndex(of: "}") {
+                return String(start.dropFirst(2)[..<end])
+            }
+        }
+        return nil
+    }
+}
+import CommonMark
+extension Node {
+    // todo include position as well
+    func localLinks() -> [String] {
+        var algebra: BlockAlgebra<[String]> = collect()
+        algebra.inline.text = { t in
+            t.linkAnchor().map { [$0] } ?? []
+        }
+        return reduce(algebra)
+    }
+}

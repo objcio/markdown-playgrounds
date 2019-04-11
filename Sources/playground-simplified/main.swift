@@ -153,7 +153,10 @@ final class ViewController: NSViewController {
     @objc func verifyLinks() {
         var collectLinks: BlockAlgebra<[String]> = collect()
         collectLinks.inline.link = { _, _, url in url.map { [$0] } ?? [] }
-        let links = Node(markdown: editor.string)!.reduce(collectLinks)
+        let node = Node(markdown: editor.string)!
+        let links = node.reduce(collectLinks)
+        print(node.localLinks()) // todo: this should include other markdown files in the same directory as well!
+        
         // todo: the attributed strings could be much more rich (including a link)
         linkChecker(links, { [weak self] result in
             switch result.payload {
