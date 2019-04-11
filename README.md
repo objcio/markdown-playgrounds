@@ -2,29 +2,33 @@
 
 [![Swift 5](https://img.shields.io/badge/swift-5-ED523F.svg?style=flat)](https://swift.org/download/) [![Swift Package Manager compatible](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager) [![@objcio](https://img.shields.io/badge/contact-%40objcio-blue.svg?style=flat)](https://twitter.com/objcio)
 
+## What it does
+
 This app reads and writes Markdown documents that contain Swift code. This code can be executed as well: you can run individual code blocks, or all the blocks in a file.
 
 We're using this app to update our book [Advanced Swift](https://www.objc.io/books/advanced-swift/), and while blogging — it's very useful!
 
-### How the app works
+## How it works
 
 The app works by sending Swift code to a REPL instance, and reading back the results. Compared to Swift Playgrounds or Xcode's playgrounds, this is quite limiting, but it also means we can keep things simple.
 
 <img width="912" alt="Screen Shot 2019-04-02 at 12 51 40" src="https://user-images.githubusercontent.com/5382/55397985-bdfca180-5547-11e9-8820-7cf3012c6e53.png">
 
-### Learn more
+## Learn more
 
 We're documenting the building of this app on [Swift Talk](https://talk.objc.io/collections/markdown-playgrounds), a weekly video series of conversational live-coding hosted by [Chris Eidhof](https://twitter.com/chriseidhof) and [Florian Kugler](https://twitter.com/floriankugler).
 
 The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) previews the app, and is free to watch.
 
-145: [Setting Up a Document Based App](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) — 🆓
-146: [Markdown Syntax Highlighting](https://talk.objc.io/episodes/S01E146-markdown-syntax-highlighting) — 🔒
-147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — unreleased
-148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — unreleased
+- 145: [Setting Up a Document Based App](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) — 🆓 Public
+- 146: [Markdown Syntax Highlighting](https://talk.objc.io/episodes/S01E146-markdown-syntax-highlighting) — 🔒 Subscribers
+- 147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — 📦 Unreleased
+- 148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — — 📦 Unreleased
+
+<img width="912" alt="Screen Shot 2019-04-02 at 12 51 40" src="https://user-images.githubusercontent.com/5382/55397985-bdfca180-5547-11e9-8820-7cf3012c6e53.png">
 
 <a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
-  <img alt="video poster image" src="https://i.vimeocdn.com/video/769411132.jpg" width="600">
+  <img width="500" alt="video cover" src="https://i.vimeocdn.com/video/769411132.jpg">
 </a>
 
 ## Building
