@@ -4,13 +4,13 @@
 
 ## What it does
 
-This app reads and writes Markdown documents that contain Swift code. This code can be executed as well: you can run individual code blocks, or all the blocks in a file.
+This app reads and writes Markdown documents that contain Swift code. The code can be executed too! You can run individual code blocks, or all the blocks in a file.
 
-We're using this app to update our book [Advanced Swift](https://www.objc.io/books/advanced-swift/), and while blogging — it's very useful!
+We're using this app to update our book [Advanced Swift](https://www.objc.io/books/advanced-swift/), and while writing [blog posts](https://www.objc.io/blog/archive/). We find it very useful, and we hope you do too.
 
 ## How it works
 
-The app works by sending Swift code to a REPL instance, and reading back the results. Compared to Swift Playgrounds or Xcode's playgrounds, this is quite limiting, but it also means we can keep things simple.
+The app works by sending Swift code to a REPL instance, then reading back the results. Compared to Swift Playgrounds or Xcode's playgrounds, this is quite limiting, but it also means we can keep things simple.
 
 <img width="912" alt="Screen Shot 2019-04-02 at 12 51 40" src="https://user-images.githubusercontent.com/5382/55397985-bdfca180-5547-11e9-8820-7cf3012c6e53.png">
 
@@ -39,7 +39,7 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 
 ## Future Direction
 
-This project could head in a number of directions, and there are many useful features we could add. Our main goal is to keep using this for authoring Swift-heavy Markdown, when deciding features that will guide our decisions.
+This project could head in a number of directions, and there are many useful features we could add. Our main goal is to keep using this for authoring Swift-heavy Markdown, which will guide our decisions when we decide on new features.
 
 To keep things simple, we have collected a list of todos in [todo.txt](todo.txt).
 
