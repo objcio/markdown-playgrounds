@@ -18,6 +18,14 @@ We're documenting the building of this app on [Swift Talk](https://talk.objc.io/
 
 The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) previews the app, and is free to watch.
 
+145: [Setting Up a Document Based App](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) — 🆓
+146: [Markdown Syntax Highlighting](https://talk.objc.io/episodes/S01E146-markdown-syntax-highlighting) — 🔒
+147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — unreleased
+148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — unreleased
+
+<a href="https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app">
+  <img alt="video poster image" src="https://i.vimeocdn.com/video/769411132.jpg" width="600">
+</a>
 
 ## Building
 
