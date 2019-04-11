@@ -13,17 +13,27 @@ struct LinkCheckResult {
     enum Payload {
         case success
         case invalidURL(message: String)
+        case invalidLocalLink
         case wrongStatusCode(statusCode: Int, error: Error?)
         case other(message: String)
     }
 }
 
 /// The callback is called once for every unique URL.
-func linkChecker(_ links: [String], _ callback: @escaping (LinkCheckResult) -> (), _ done: @escaping () -> ()) {
+func linkChecker(_ links: [String], availableLocalLinks: [String], _ callback: @escaping (LinkCheckResult) -> (), _ done: @escaping () -> ()) {
     
     let realURLs: [URL] = links.compactMap { l in
         let res: (LinkCheckResult.Payload) -> LinkCheckResult = {
             LinkCheckResult(link: l, payload: $0)
+        }
+        if l.hasPrefix("#") {
+            let linkName = String(l.dropFirst())
+            if availableLocalLinks.contains(linkName) {
+                callback(res(.success))
+            } else {
+                callback(res(.invalidLocalLink))
+            }
+            return nil
         }
         guard let u = URL(string: l) else {
             callback(res(.invalidURL(message: "Can't parse URL")))
@@ -31,10 +41,6 @@ func linkChecker(_ links: [String], _ callback: @escaping (LinkCheckResult) -> (
         }
         guard let comps = URLComponents(url: u, resolvingAgainstBaseURL: false) else {
             callback(res(.invalidURL(message: "Can't get URL components")))
-            return nil
-        }
-        guard comps.scheme != nil else {
-            callback(res(.other(message: "Local link (TODO)"))) // todo)
             return nil
         }
         return u
@@ -63,7 +69,9 @@ func linkChecker(_ links: [String], _ callback: @escaping (LinkCheckResult) -> (
                 c(.other(message: err?.localizedDescription ?? "Unknown error"))
             }
             if remainingLinks.value.isEmpty {
-                done()
+                DispatchQueue.main.async {
+                    done()
+                }
             }
         }).resume()
     }

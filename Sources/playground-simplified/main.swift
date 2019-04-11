@@ -25,15 +25,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 let stdOutAttributes: [NSAttributedString.Key: Any] = [.font: NSFont(name: "Monaco", size: 12)!, .foregroundColor: NSColor.textColor]
 let stdErrAttributes: [NSAttributedString.Key: Any] = stdOutAttributes.merging([.foregroundColor: NSColor.red], uniquingKeysWith: { $1 })
 
+protocol DocumentContext: class {
+    var availableLocalLinks: [(url: URL, links: [String])] { get }
+}
+
 final class ViewController: NSViewController {
     let editor = NSTextView()
     let output = NSTextView()
+    let editorDelegate = EditorDelegate()
+    
     private var observationToken: Any?
     
     private var codeBlocks: [CodeBlock] = []
     private var repl: REPL<CodeBlock>?
     private let swiftHighlighter = SwiftHighlighter()
-
+    weak var documentContext: DocumentContext?
     
     var text: String {
         get { return editor.string }
@@ -49,6 +55,21 @@ final class ViewController: NSViewController {
         output.delegate = self
         output.linkTextAttributes = [.cursor: NSCursor.pointingHand]
         editor.allowsUndo = true
+        editor.delegate = editorDelegate
+        editorDelegate.onLocalLink = { [unowned self] link in
+            guard let links = self.documentContext?.availableLocalLinks else { return }
+            guard let url = links.first(where: { $0.links.contains(link) })?.url else {
+                print("No such link") // todo show message
+                return
+            }
+            NSDocumentController.shared.openDocument(withContentsOf: url, display: true, completionHandler: { document, wasAlreadyOpen, err in
+                guard let d = document as? MarkdownDocument else {
+                    return // todo show message?
+                }
+                d.scrollToLink(link)
+            })
+            
+        }
         let c = outputScrollView.widthAnchor.constraint(greaterThanOrEqualToConstant: 200)
         c.priority = .defaultHigh
         c.isActive = true
@@ -107,6 +128,11 @@ final class ViewController: NSViewController {
         self.output.textStorage?.append(NSAttributedString(string: string + "\n", attributes: atts))
     }
     
+    func scrollToLink(_ name: String) {
+        guard let range = editor.string.range(of: "{#\(name)}") else { return }
+        editor.scrollRangeToVisible(NSRange(range, in: editor.string))
+    }
+    
     func highlight() {
         // todo: this code has too much knowledge about the highlighter.
         guard let att = editor.textStorage else { return }
@@ -155,22 +181,28 @@ final class ViewController: NSViewController {
         collectLinks.inline.link = { _, _, url in url.map { [$0] } ?? [] }
         let node = Node(markdown: editor.string)!
         let links = node.reduce(collectLinks)
-        print(node.localLinks()) // todo: this should include other markdown files in the same directory as well!
+        
+        let localLinks = (documentContext?.availableLocalLinks ?? []).flatMap {
+            $0.links
+        }
         
         // todo: the attributed strings could be much more rich (including a link)
-        linkChecker(links, { [weak self] result in
+        linkChecker(links, availableLocalLinks: localLinks, { [weak self] result in
             switch result.payload {
-            case let .invalidURL(message: m):
+            case .invalidLocalLink:
+                self?.writeError("Couldn't find local link \(result.link)", source: nil)
+            case let .invalidURL(message: _):
                 self?.writeError("Invalid URL \(result.link)", source: nil)
-            case let .wrongStatusCode(statusCode: s, error: err):
+            case let .wrongStatusCode(statusCode: s, error: _):
                 self?.writeError("Failed \(s) \(result.link)", source: nil)
             case let .other(message: m):
                 self?.writeError("Failed \(result.link) \(m)", source: nil)
             case .success:
-                self?.writeOutput("200 OK \(result.link)", source: nil)
+//                self?.writeOutput("200 OK \(result.link)", source: nil)
+                ()
             }
         }, { [weak self] in
-            self?.writeOutput("Link Check done.", source: nil)
+            self?.writeOutput("Link check done. Checked \(links.count) links.", source: nil)
         })
     }
     
@@ -187,9 +219,26 @@ final class ViewController: NSViewController {
 
 extension ViewController: NSTextViewDelegate {
     func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
-        guard let u = link as? NSRange else { return false }
-        scrollToError(u)
-        return true
+        if let u = link as? NSRange {
+            scrollToError(u)
+            return true
+        }
+        
+        return false
+    }
+}
+
+final class EditorDelegate: NSObject, NSTextViewDelegate {
+    var onLocalLink: (String) -> () = { _ in () }
+    
+    func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+        if let l = link as? URL, l.absoluteString.hasPrefix("#") {
+            let name = l.absoluteString.dropFirst()
+            onLocalLink(String(name))
+            return true
+        } else {
+            return false
+        }
     }
 }
 

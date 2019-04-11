@@ -81,6 +81,9 @@ final class MarkdownDocument: NSDocument {
         return text.data(using: .utf8)!
     }
     
+    func scrollToLink(_ name: String) {
+        contentViewController.scrollToLink(name)
+    }
     override func makeWindowControllers() {
         let window = NSWindow(contentViewController: contentViewController)
         window.styleMask.formUnion(.fullSizeContentView)
@@ -89,11 +92,27 @@ final class MarkdownDocument: NSDocument {
         
         let wc = NSWindowController(window: window)
         wc.contentViewController = contentViewController
+        contentViewController.documentContext = self
         addWindowController(wc)
         
         window.setFrameTopLeftPoint(NSPoint(x: 5, y: (NSScreen.main?.visibleFrame.maxY ?? 0) - 5))
         MarkdownDocument.cascadePoint = window.cascadeTopLeft(from: MarkdownDocument.cascadePoint)
         window.makeKeyAndOrderFront(nil)
         window.setFrameAutosaveName(self.fileURL?.absoluteString ?? "empty")
+    }
+}
+
+import CommonMark
+
+extension MarkdownDocument: DocumentContext {
+    // This is very specific to our (objc.io) books. Not sure if there's a good way to make this work more generally.    
+    var availableLocalLinks: [(url: URL, links: [String])] {
+        guard let directory = self.fileURL?.deletingLastPathComponent(),
+            let files = try? FileManager.default.contentsOfDirectory(atPath: directory.path).filter({ $0.hasSuffix(".md") }) else { return [] }
+        return files.map { file in
+            let url = directory.appendingPathComponent(file)
+            guard let node = Node(filename: url.path) else { return (url: url, [] ) }
+            return (url: url, node.localLinks())
+        }
     }
 }
