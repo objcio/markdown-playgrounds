@@ -154,56 +154,21 @@ final class ViewController: NSViewController {
         var collectLinks: BlockAlgebra<[String]> = collect()
         collectLinks.inline.link = { _, _, url in url.map { [$0] } ?? [] }
         let links = Node(markdown: editor.string)!.reduce(collectLinks)
-        struct ValidationError: Error {
-            let str: String
-            init(_ str: String) { self.str = str }
-        }
-        let realURLs: [Result<URL, Error>] = links.map { l in
-            return Result(catching: {
-            guard let u = URL(string: l) else {
-                throw ValidationError("Invalid URL \(l)")
+        // todo: the attributed strings could be much more rich (including a link)
+        linkChecker(links, { [weak self] result in
+            switch result.payload {
+            case let .invalidURL(message: m):
+                self?.writeError("Invalid URL \(result.link)", source: nil)
+            case let .wrongStatusCode(statusCode: s, error: err):
+                self?.writeError("Failed \(s) \(result.link)", source: nil)
+            case let .other(message: m):
+                self?.writeError("Failed \(result.link) \(m)", source: nil)
+            case .success:
+                self?.writeOutput("200 OK \(result.link)", source: nil)
             }
-            guard let comps = URLComponents(url: u, resolvingAgainstBaseURL: false) else {
-                throw ValidationError("No valid components: \(u)")
-            }
-            guard comps.scheme != nil else {
-                throw ValidationError("local link: \(l)") // todo
-            }
-                
-            return u
-        })}
-        let counter = Atomic<Set<URL>>([])
-        for u in realURLs {
-            switch u {
-            case let .failure(s): writeError("\(s)", source: nil)
-            case let .success(url): counter.mutate { $0.insert(url) }
-            }
-        }
-    
-        for url in counter.value {
-            var request = URLRequest(url: url, timeoutInterval: 3)
-            request.httpMethod = "HEAD"
-            URLSession.shared.dataTask(with: request, completionHandler: { data, response, err in
-                counter.mutate {
-                    $0.remove(url)
-                    print("\($0) links remaining")
-                }
-                let httpResponse = response as? HTTPURLResponse
-                DispatchQueue.main.async {
-                    if httpResponse?.statusCode == 200 {
-                        self.writeOutput("OK \(url)", source: nil)
-                    } else if let code = httpResponse?.statusCode {
-                        self.writeError("\(code) \(url)", source: nil)
-                    } else {
-                        self.writeError("\(err!.localizedDescription) \(url)", source: nil)
-                    }
-                    if counter.value.isEmpty {
-                        self.writeOutput("Done checking links", source: nil)
-                    }
-                }
-                
-            }).resume()
-        }
+        }, { [weak self] in
+            self?.writeOutput("Link Check done.", source: nil)
+        })
     }
     
     func scrollToError(_ range: NSRange) {
