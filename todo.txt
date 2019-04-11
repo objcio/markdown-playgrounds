@@ -13,6 +13,7 @@
 - [ ] Have an (optional?) clickable outline-view of the document on the left-hand-side of the splitview.
 - [ ] Parse yaml preamble?
 - [ ] Allow for a way to have "rich" results. Maybe we could do something with HTML?
+- [ ] Allow for multi-line expressions. Maybe we could simulate the down arrow somehow.
 
 - [x] Have a way to go back to the source code from an error in the console (could be a link)
 - [x] Something is wrong with conforming to certain protocols (e.g. list and ExpressibleByArrayLiteral).
