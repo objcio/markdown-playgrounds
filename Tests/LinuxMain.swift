@@ -1,7 +1,7 @@
 import XCTest
 
-import playground_simplifiedTests
+import MarkdownPlaygroundTests
 
 var tests = [XCTestCaseEntry]()
-tests += playground_simplifiedTests.allTests()
+tests += MarkdownPlaygroundTests.allTests()
 XCTMain(tests)
