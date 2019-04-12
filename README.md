@@ -34,8 +34,31 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 
 ## Building
 
-- You need to have [cmark](https://github.com/commonmark/cmark) installed from master (not via homebrew). If you use the version from homebrew, you won't get proper syntax highlighting (especially for inline elements).
+- You need to have [cmark](https://github.com/commonmark/cmark) installed *from master* (not via homebrew). If you use the version from homebrew, you won't get proper syntax highlighting (specifically: for inline elements).
 - This project uses [Swift Package Manager](https://github.com/apple/swift-package-manager). You can either run "swift build" or do "swift package generate-xcodeproj"
+
+Here are the steps as shell commands:
+
+```
+git clone https://github.com/commonmark/cmark
+cd cmark
+mkdir build
+cd build
+cmake ..
+make
+make test
+make install
+cd ../..
+
+# Building this project
+git clone https://github.com/objcio/markdown-playgrounds
+cd markdown-playgrounds
+swift build
+
+# If you want to edit this in Xcode
+swift package generate-xcodeproj
+xed .
+```
 
 ## Future Direction
 
