@@ -28,7 +28,7 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 
 - 145: [Setting Up a Document Based App](https://talk.objc.io/episodes/S01E145-setting-up-a-document-based-app) — 🆓 Public
 - 146: [Markdown Syntax Highlighting](https://talk.objc.io/episodes/S01E146-markdown-syntax-highlighting) — 🔒 Subscriber
-- 147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — 📦 Unreleased
+- 147: [Executing Swift Code](https://talk.objc.io/episodes/S01E147-executing-swift-code) — 🔒 Subscriber
 - 148: [String Handling](https://talk.objc.io/episodes/S01E148-string-handling) — 📦 Unreleased
 
 
