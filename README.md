@@ -39,7 +39,7 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 
 Here are the steps as shell commands:
 
-```
+```sh
 git clone https://github.com/commonmark/cmark
 cd cmark
 mkdir build
