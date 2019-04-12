@@ -8,6 +8,31 @@
 import Foundation
 import AppKit
 
+let emptyDocumentText: String =
+    """
+    # Markdown Playgrounds
+
+    This is an example document for [Markdown Playgrounds](https://github.com/objcio/markdown-playgrounds).
+
+    ```swift
+    1 + 1
+    ```
+
+    You can execute the code above by moving your cursor into the code block, and pressing *Cmd+E*.
+
+    ```swift
+    "hello".count
+    ```
+
+    Or press *Cmd+Shift+E* to execute all code blocks.
+
+    ```swift-example
+    // A swift-example code block never executes.
+    struct Array {
+    }
+    ```
+    """
+
 final class MarkdownDocumentController: NSDocumentController {
     override var documentClassNames: [String] { return ["MarkdownDocument"] }
     override var defaultType: String? { return "MarkdownDocument" }
@@ -37,6 +62,7 @@ final class MarkdownDocument: NSDocument {
     
     override init() {
         super.init()
+        text = emptyDocumentText
     }
     
     override class var readableTypes: [String] {
