@@ -126,7 +126,7 @@ final class ViewController: NSViewController {
         guard let r = editor.selectedRanges.first?.rangeValue else { return }
         guard let found = codeBlocks.first(where: { ($0.range.lowerBound...$0.range.upperBound).contains(r.location) }) else { return }
         switch found.fenceInfo {
-        case "swift", "swift-test":
+        case "swift", "swift-test", "swift-hidden":
             repl?.evaluate(found.text, metadata: found)
         case "swift-example":
             writeOutput("Not executing sample-only code", source: found)
@@ -157,6 +157,7 @@ final class ViewController: NSViewController {
     }
     
     func scrollTo(position: String.Index) {
+        guard (editor.string.startIndex..<editor.string.endIndex).contains(position) else { return }
         editor.scrollRangeToVisible(NSRange(position...position, in: editor.string))
     }
 }
