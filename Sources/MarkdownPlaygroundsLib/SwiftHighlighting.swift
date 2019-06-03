@@ -39,10 +39,11 @@ extension NSMutableAttributedString {
     }
 }
 
-class SwiftHighlighter {
+public class SwiftHighlighter {
     typealias Result = [(range: Range<String.Index>, kind: Token.Kind)]
     
     var cache: [String:Result] = [:]
+    public init() { }
     
     func highlight(_ pieces: [String]) throws -> [Result] {
         // todo we probably only need to return (Block,Result) for the non-cached pieces!
@@ -85,6 +86,7 @@ class SwiftHighlighter {
     }
     
     private func _highlight(_ code: String) throws -> Result {
+        // TODO: see if we can do this in the background (using a dispatch group / semaphore?)
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let fileName = "\(UUID().uuidString).swift"
         let file = tempDir.appendingPathComponent(fileName)

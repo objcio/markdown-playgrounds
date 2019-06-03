@@ -16,10 +16,13 @@ let package = Package(
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
-            name: "MarkdownPlaygrounds",
+            name: "MarkdownPlaygroundsLib",
             dependencies: ["CommonMark", "Ccmark", "SwiftSyntax"]),
+        .target(
+            name: "MarkdownPlaygrounds",
+            dependencies: ["MarkdownPlaygroundsLib"]),
         .testTarget(
             name: "MarkdownPlaygroundsTests",
-            dependencies: ["MarkdownPlaygrounds"]),
+            dependencies: ["MarkdownPlaygroundsLib"]),
     ]
 )

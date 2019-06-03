@@ -7,6 +7,15 @@
 
 import Cocoa
 
+@discardableResult
+func measure<A>(name: String = "", _ block: () throws -> A) rethrows -> A {
+    let startTime = CACurrentMediaTime()
+    let result = try block()
+    let timeElapsed = CACurrentMediaTime() - startTime
+    print("Time: \(name) - \(timeElapsed)")
+    return result
+}
+
 func application(delegate: AppDelegate) -> NSApplication {
     // Inspired by https://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html
     let app = NSApplication.shared
