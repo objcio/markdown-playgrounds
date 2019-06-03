@@ -126,14 +126,38 @@ final class Lazy<A> {
     }
 }
 
+struct HighlightResult {
+    var topLevelRanges: [NSRange] // One per code block
+    var codeblocks: [CodeBlock]
+}
+
+extension BidirectionalCollection where Element == NSRange, Index == Int {
+    func invalidRanges(for range: NSRange) -> SubSequence {
+        let start = firstIndex(where: { el in
+            el.intersection(range) != nil
+        }).map { $0 - 1 } ?? (endIndex - 1)
+        let end = lastIndex(where: { el in
+            el.intersection(range) != nil
+        }).map { $0 + 1 } ?? endIndex
+        let theRange = Swift.max(start, startIndex)..<Swift.min(end, endIndex-1) // clamp to valid range
+        return self[theRange]
+    }
+    
+    var unioned: NSRange? {
+        guard let f = first else { return nil }
+        return reduce(f, { r1, r2 in
+            r1.union(r2)
+        })
+    }
+}
+
 extension NSMutableAttributedString {
     var range: NSRange { return NSMakeRange(0, length) }
     
-    func highlightMarkdown(_ swiftHighlighter: SwiftHighlighter, codeBlocks: [CodeBlock], range invalidRange: NSRange) -> [CodeBlock] {
-        print("highlight \(invalidRange)")
+    func highlightMarkdown(_ swiftHighlighter: SwiftHighlighter, codeBlocks: [CodeBlock], range invalidRange: NSRange) -> HighlightResult {
         let codeBlocksWithError = codeBlocks.filter { $0.error != nil }
         let string = self.string
-        guard let parsed = Node(markdown: string) else { return [] }
+        let parsed = Node(markdown: string)!
         let scalars = string.unicodeScalars
         let lineNumbers = string.unicodeScalars.lineIndices
         var utf8 = string.utf8
@@ -169,14 +193,18 @@ extension NSMutableAttributedString {
             }
         }
         
-        let extendedInvalidRange = NSRange(location: invalidRange.location, length: self.range.length - invalidRange.location)
-        setAttributes(defaultAttributes.atts, range: extendedInvalidRange)
+        let topLevelRanges = childRanges.map { $0.1 }
+        let invalidSlice = topLevelRanges.invalidRanges(for: invalidRange)
+        if let r = invalidSlice.unioned {
+        	setAttributes(defaultAttributes.atts, range: r)
+        }
         
-        for (node, childRange) in childRanges {
-            guard childRange.location >= invalidRange.location || childRange.contains(invalidRange.location) else {
-//                print("Skipping child \(node), \(childRange)")
-                continue
-            }
+        for (node, childRange) in childRanges[invalidSlice.startIndex..<invalidSlice.endIndex] {
+//            guard childRange.contains(invalidRange.location) else {
+////            guard childRange.location >= invalidRange.location || childRange.contains(invalidRange.location) else {
+////                print("Skipping child \(node), \(childRange)")
+//                continue
+//            }
             node.visitAll(defaultAttributes) { el, attributes in
                 guard el.start.column > 0 && el.start.line > 0 else { return }
                 let lazyRange = Lazy<NSRange> { range(for: el) }
@@ -229,6 +257,6 @@ extension NSMutableAttributedString {
         }
         
        
-        return result
+        return HighlightResult(topLevelRanges: topLevelRanges, codeblocks: result)
     }
 }

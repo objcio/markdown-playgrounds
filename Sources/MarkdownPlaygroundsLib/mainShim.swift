@@ -42,6 +42,7 @@ final class ViewController: NSViewController {
     private var observationToken: Any?
     
     private var codeBlocks: [CodeBlock] = []
+    private var ranges: [NSRange] = []
     private var repl: REPL<CodeBlock>?
     private let swiftHighlighter = SwiftHighlighter()
 
@@ -78,6 +79,7 @@ final class ViewController: NSViewController {
         super.viewDidLoad()
         observationToken = NotificationCenter.default.addObserver(forName: NSText.didChangeNotification, object: editor, queue: nil) { [unowned self] note in
             if let r = self.invalidRange {
+//                print(r)
             	self.highlight(from: r)
             }
 //            dump(note)
@@ -88,7 +90,8 @@ final class ViewController: NSViewController {
 //            }
         }
         d.willProcess = { [unowned self] in
-            self.invalidRange = $0
+//            print(self.ranges.count, self.ranges.invalidRanges(for: $0).count, self.ranges.invalidRanges(for: $0).unioned, $0)
+            self.invalidRange = self.ranges.invalidRanges(for: $0).unioned ?? $0
         }
         setupREPL()
     }
@@ -139,7 +142,9 @@ final class ViewController: NSViewController {
     func highlight(from range: NSRange? = nil) {
         // todo: this code has too much knowledge about the highlighter.
         guard let att = editor.textStorage else { return }
-        codeBlocks = att.highlightMarkdown(swiftHighlighter, codeBlocks: codeBlocks, range: range ?? att.range)
+        let result = att.highlightMarkdown(swiftHighlighter, codeBlocks: codeBlocks, range: range ?? att.range)
+        codeBlocks = result.codeblocks
+        ranges = result.topLevelRanges
         guard !codeBlocks.isEmpty else { return }
         do {
             // if the call to highlight is *within* a `beginEditing` block, it crashes (!)

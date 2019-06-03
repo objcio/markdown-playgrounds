@@ -86,12 +86,11 @@ public class SwiftHighlighter {
     }
     
     private func _highlight(_ code: String) throws -> Result {
-        // TODO: see if we can do this in the background (using a dispatch group / semaphore?)
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
         let fileName = "\(UUID().uuidString).swift"
         let file = tempDir.appendingPathComponent(fileName)
-        try code.write(to: file, atomically: true, encoding: .utf8)
-        let sourceFile = try SyntaxTreeParser.parse(file)
+        try! code.write(to: file, atomically: true, encoding: .utf8)
+        let sourceFile = try! SyntaxTreeParser.parse(file)
         let highlighter = SwiftHighlighterRewriter()
         _ = highlighter.visit(sourceFile)
         
@@ -102,7 +101,7 @@ public class SwiftHighlighter {
             return (result, t.kind)
         }
         
-        try? FileManager.default.removeItem(at: file)
+        try! FileManager.default.removeItem(at: file)
         return result
     }
 }
