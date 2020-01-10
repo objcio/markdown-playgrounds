@@ -89,7 +89,7 @@ class SwiftHighlighter {
         let fileName = "\(UUID().uuidString).swift"
         let file = tempDir.appendingPathComponent(fileName)
         try code.write(to: file, atomically: true, encoding: .utf8)
-        let sourceFile = try SyntaxTreeParser.parse(file)
+        let sourceFile = try SyntaxParser.parse(file)
         let highlighter = SwiftHighlighterRewriter()
         _ = highlighter.visit(sourceFile)
         

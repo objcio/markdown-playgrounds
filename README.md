@@ -34,6 +34,8 @@ The [first episode](https://talk.objc.io/episodes/S01E145-setting-up-a-document-
 
 ## Building
 
+*Note*: currently this builds, but doesn't run from Xcode. Instead, build and run from the command line.
+
 - You need to have [cmark](https://github.com/commonmark/cmark) installed *from master* (not via homebrew). If you use the version from homebrew, you won't get proper syntax highlighting (specifically: for inline elements).
 - This project uses [Swift Package Manager](https://github.com/apple/swift-package-manager). You can either run "swift build" or do "swift package generate-xcodeproj"
 
